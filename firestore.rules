@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email != null &&
+             (request.auth.token.email.lower() == 'gerarditomusic@gmail.com' ||
+              request.auth.token.email.lower() == 'info@dev.gtunene.com');
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Waiting List: anyone can join (create), admins can manage all
+    match /waiting_list/{entryId} {
+      allow read: if true;
+      allow create: if request.resource.data.email is string &&
+                       request.resource.data.email.size() > 3 &&
+                       request.resource.data.email.size() < 180;
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // 2. Ecosystem Users (Permissions, Roles, Bans across all 6 apps)
+    match /ecosystem_users/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // 3. Ecosystem Global State (Agent Pause/Resume & Promotions Pause/Resume)
+    match /ecosystem_config/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // 3b. Ecosystem Trash Bin (Soft-deleted users, waitlist entries, leads across all apps)
+    match /ecosystem_trash/{docId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // 4. Shared Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() || isSuperAdmin();
+      allow write: if isOwner(userId) || isSuperAdmin();
+    }
+
+    // 5. Vocal Score Studio Collections
+    match /conversions/{conversionId} {
+      allow read, write: if isAuthenticated() || isSuperAdmin();
+    }
+    match /human_orders/{orderId} {
+      allow read, write: if isAuthenticated() || isSuperAdmin();
+    }
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // 6. AI Creative Assistant & SMM Collections
+    match /ai_creator_projects/{projectId} {
+      allow read, write: if isAuthenticated() || isSuperAdmin();
+    }
+
+    // 7. GTUBLOG Collections (Public read for posts, SuperAdmin write & trash)
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /blog_trash/{trashId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // 8. Gtuprod Playlists & Trash Bin
+    match /gtuprod_tracks/{trackId} {
+      allow read: if true;
+      allow write: if isAuthenticated() || isSuperAdmin();
+    }
+    match /gtuprod_trash/{trashId} {
+      allow read, write: if isAuthenticated() || isSuperAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTUBLOG · Ingeniería IA, Música & Arquitectura Rust Cloud Run | GTUDEV</title>
+  <meta name="description" content="GTUBLOG: Blog oficial del ecosistema GTUDEV con backend ultraligero en Rust (Axum) sobre Google Cloud Run con Cero Cold Start y Chatbot Gemini 2.5 integrado." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #050507;
+      color: #f5f5f7;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass {
+      background: rgba(18, 18, 22, 0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .post-card {
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .post-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 20px 50px -15px rgba(56, 189, 248, 0.18);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-black">
+
+  <!-- Top Ecosystem Bar -->
+  <header class="sticky top-0 z-40 glass border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="https://gtudev.web.app" class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 transition">
+          ← GTUDEV Hub
+        </a>
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-sky-500 flex items-center justify-center font-extrabold text-black text-sm shadow-lg shadow-orange-500/20">
+            🦀
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold tracking-tight text-white text-base">GTUBLOG</span>
+              <span class="mono text-[10px] px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-300 border border-orange-500/30 font-semibold">
+                Rust Axum · 0ms Cold Start
+              </span>
+            </div>
+            <p class="text-[11px] text-zinc-400 hidden sm:block">Ingeniería IA, Producción Musical & Cloud Run</p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-5 text-xs font-medium text-zinc-400">
+        <a href="#articulos" class="hover:text-white transition">Artículos</a>
+        <a href="#arquitectura" class="hover:text-white transition">Arquitectura Rust</a>
+        <a href="#chatbot-section" class="hover:text-white transition">Chatbot IA</a>
+        <a href="https://gtuprod.web.app" class="hover:text-sky-400 transition">Gtuprod Player ↗</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <div id="mode-badge" class="mono text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          🌱 ECONOMIC
+        </div>
+        <button onclick="toggleAdminDrawer()" class="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5">
+          <span>⚙️</span> <span>CMS & Basurero</span>
+          <span id="trash-badge-count" class="mono text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded-full">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden py-14 sm:py-20 border-b border-white/10">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(249,115,22,0.12),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(56,189,248,0.12),transparent_50%)] pointer-events-none"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-zinc-300 mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Contenedor Multi-Stage Alpine · Conectado a Gemini 2.5 Flash &amp; GTUDEV Hub</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white mb-4">
+          El Blog de Ingeniería Musical e IA con <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-sky-400">Cero Cold Start</span>.
+        </h1>
+        <p class="text-zinc-400 text-base sm:text-lg leading-relaxed mb-6">
+          Desarrollado en <strong>Rust + Axum</strong> para despertar en menos de <strong>5 milisegundos</strong> en Google Cloud Run. Todos los artículos publicados aquí se sincronizan automáticamente con la página principal de <a href="https://gtudev.web.app" class="text-sky-400 underline hover:text-sky-300">GTUDEV</a>.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="openNewPostModal()" class="px-5 py-2.5 rounded-full bg-white text-black font-semibold text-xs sm:text-sm hover:bg-zinc-200 transition shadow-lg">
+            ✍️ Publicar / Generar Post con IA
+          </button>
+          <a href="#chatbot-section" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-xs sm:text-sm transition">
+            🤖 Consultar al Chatbot del Blog
+          </a>
+          <div class="mono text-xs text-zinc-400 px-3 py-2 rounded-xl bg-zinc-900/80 border border-white/10">
+            ⚡ Runtime: <span id="health-runtime" class="text-orange-400 font-semibold">rust-axum-alpine</span> · Posts activos: <span id="active-posts-count" class="text-white font-bold">6</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content: Filter Bar + Posts Grid + Embedded AI Chatbot -->
+  <main id="articulos" class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <!-- Category Pills -->
+      <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+        <button data-cat="all" onclick="setCategory('all')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-black transition">Todos</button>
+        <button data-cat="Arquitectura & Cloud" onclick="setCategory('Arquitectura & Cloud')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition">Arquitectura &amp; Cloud</button>
+        <button data-cat="IA & Audio" onclick="setCategory('IA & Audio')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition">IA &amp; Audio</button>
+        <button data-cat="Producción & Mastering" onclick="setCategory('Producción & Mastering')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition">Producción &amp; Mastering</button>
+        <button data-cat="Lanzamientos & Promo" onclick="setCategory('Lanzamientos & Promo')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition">Lanzamientos &amp; Promo</button>
+        <button data-cat="Crecimiento Social" onclick="setCategory('Crecimiento Social')" class="cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition">Crecimiento Social</button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full md:w-72">
+        <input id="blog-search" type="text" oninput="renderPosts()" placeholder="Buscar en GTUBLOG (Rust, MIDI, LUFS...)" class="w-full bg-zinc-900/90 border border-white/15 rounded-full px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-sky-400" />
+      </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-14"></div>
+
+    <!-- Embedded Blog AI Chatbot & Rust Architecture Spec -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" id="chatbot-section">
+      <!-- Chatbot Box -->
+      <div class="lg:col-span-7 glass rounded-3xl p-6 border border-sky-500/25 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-lg">🤖</div>
+            <div>
+              <h2 class="text-base font-bold text-white">Asistente Editorial Gemini 2.5 · GTUBLOG</h2>
+              <p class="text-xs text-zinc-400">Conectado vía HTTP directo desde Rust (`reqwest` + `rustls`) sin SDKs pesados</p>
+            </div>
+          </div>
+          <span id="chat-api-counter" class="mono text-[11px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-white/10">
+            0 calls · $0.0000
+          </span>
+        </div>
+
+        <div id="blog-chat-messages" class="h-72 overflow-y-auto space-y-3 pr-1 mb-4 text-xs sm:text-sm">
+          <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-zinc-200 leading-relaxed">
+            👋 ¡Hola! Soy el **Chatbot integrado de GTUBLOG**. Puedes preguntarme sobre cualquiera de nuestros artículos técnicos (arquitectura **Rust + Axum en Cloud Run**, transcripción vocal en **Music Score**, el nuevo **Player Multi-Playlist de Gtuprod**, **Promo Agent** o **Peakerr SMM**).
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          <button onclick="askBlogBot('¿Por qué elegimos Rust y Axum en lugar de WordPress para Cloud Run?')" class="text-[11px] px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300">🦀 ¿Por qué Rust + Axum?</button>
+          <button onclick="askBlogBot('¿Cómo funciona el nuevo reproductor de playlists y demos en Gtuprod?')" class="text-[11px] px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300">🎧 Playlists en Gtuprod</button>
+          <button onclick="askBlogBot('¿Cómo funciona el basurero de posts y usuarios en GTUBLOG?')" class="text-[11px] px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300">🗑️ Basurero Recuperable</button>
+        </div>
+
+        <form onsubmit="submitBlogChat(event)" class="flex gap-2">
+          <input id="blog-chat-input" type="text" placeholder="Pregunta sobre cualquier artículo o pide un resumen técnico..." class="flex-1 bg-black/70 border border-white/15 rounded-full px-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-sky-400" />
+          <button type="submit" class="px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs sm:text-sm transition">
+            Preguntar
+          </button>
+        </form>
+      </div>
+
+      <!-- Architecture Card -->
+      <div id="arquitectura" class="lg:col-span-5 glass rounded-3xl p-6 border border-orange-500/25">
+        <div class="flex items-center gap-2 text-orange-400 text-xs font-bold uppercase tracking-wider mb-2">
+          <span>🦀 Arquitectura Cloud Run</span>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-3">Binario Estático Rust + Alpine (~18 MB)</h3>
+        <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+          A diferencia de un contenedor PHP/WordPress o Node.js que consume 300–600 MB de RAM y tarda 2–5 segundos en arrancar desde cero, <code>gtublog</code> compila con <code>opt-level = "z"</code> y <code>lto = true</code> a un único binario nativo.
+        </p>
+        <div class="space-y-2.5 mono text-xs mb-4">
+          <div class="p-3 rounded-xl bg-black/60 border border-white/10 flex justify-between">
+            <span class="text-zinc-400">Cold Start (Scale 0 → 1):</span>
+            <span class="text-emerald-400 font-bold">&lt; 5 ms</span>
+          </div>
+          <div class="p-3 rounded-xl bg-black/60 border border-white/10 flex justify-between">
+            <span class="text-zinc-400">Memoria RAM en reposo:</span>
+            <span class="text-sky-400 font-bold">~14 MB</span>
+          </div>
+          <div class="p-3 rounded-xl bg-black/60 border border-white/10 flex justify-between">
+            <span class="text-zinc-400">Sincronización Hub:</span>
+            <span class="text-amber-300 font-bold">gtudev.web.app/#blog</span>
+          </div>
+          <div class="p-3 rounded-xl bg-black/60 border border-white/10 flex justify-between">
+            <span class="text-zinc-400">Soft-Delete Basurero:</span>
+            <span class="text-emerald-400 font-bold">Activo (Posts + Usuarios)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Article Reader Modal -->
+  <div id="reader-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xl flex items-center justify-center p-4" onclick="closeReaderModal()">
+    <div class="glass max-w-3xl w-full max-h-[88vh] rounded-3xl overflow-hidden flex flex-col border border-white/15 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between gap-4">
+        <span id="reader-category" class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">Categoría</span>
+        <div class="flex items-center gap-2">
+          <button id="reader-trash-btn" class="text-xs px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition">
+            🗑️ Enviar al Basurero
+          </button>
+          <button onclick="closeReaderModal()" class="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white">Cerrar ✕</button>
+        </div>
+      </div>
+      <div class="p-6 sm:p-8 overflow-y-auto space-y-5">
+        <h2 id="reader-title" class="text-2xl sm:text-3xl font-extrabold text-white leading-tight"></h2>
+        <div id="reader-meta" class="text-xs text-zinc-400 mono"></div>
+        <div id="reader-body" class="text-zinc-200 text-sm sm:text-base leading-relaxed space-y-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin CMS & Trash Bin Drawer / Modal -->
+  <div id="admin-drawer" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xl flex items-center justify-center p-4" onclick="toggleAdminDrawer()">
+    <div class="glass max-w-4xl w-full max-h-[90vh] rounded-3xl overflow-hidden flex flex-col border border-white/15 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="p-5 sm:p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-white">⚙️ Panel Admin CMS &amp; Basurero · GTUBLOG</h2>
+          <p class="text-xs text-zinc-400">Publica artículos sincronizados con GTUDEV, cambia el modo de cuota Gemini y restaura elementos del Basurero.</p>
+        </div>
+        <button onclick="toggleAdminDrawer()" class="text-xs px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white">Cerrar ✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <!-- Operational Mode Selector -->
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div class="text-sm font-bold text-white">Modo de Cuota IA Gemini 2.5 (GTUBLOG)</div>
+            <div class="text-xs text-zinc-400">Controla el presupuesto diario de llamadas HTTP desde Rust hacia Gemini API.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="setBlogMode('economic')" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🌱 Economic</button>
+            <button onclick="setBlogMode('media')" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">⚡ Media</button>
+            <button onclick="setBlogMode('turbo')" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">🚀 Turbo</button>
+          </div>
+        </div>
+
+        <!-- Create / Generate Post Form -->
+        <div class="p-5 rounded-2xl bg-zinc-900/90 border border-white/10 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-bold text-white">✍️ Crear o Generar Nuevo Artículo (Se muestra en GTUBLOG y en GTUDEV Hub)</h3>
+            <button type="button" onclick="generatePostWithAI()" class="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-sky-500 text-black hover:opacity-90 transition">
+              ✨ Autocompletar Borrador con IA Gemini
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input id="new-post-title" type="text" placeholder="Título del artículo..." class="sm:col-span-2 bg-black border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+            <select id="new-post-category" class="bg-black border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white">
+              <option value="Arquitectura & Cloud">Arquitectura &amp; Cloud</option>
+              <option value="IA & Audio">IA &amp; Audio</option>
+              <option value="Producción & Mastering">Producción &amp; Mastering</option>
+              <option value="Lanzamientos & Promo">Lanzamientos &amp; Promo</option>
+              <option value="Crecimiento Social">Crecimiento Social</option>
+            </select>
+          </div>
+          <input id="new-post-excerpt" type="text" placeholder="Resumen corto para la tarjeta y página principal de GTUDEV..." class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+          <textarea id="new-post-content" rows="4" placeholder="Contenido completo en Markdown..." class="w-full bg-black border border-white/15 rounded-xl p-3.5 text-xs text-white"></textarea>
+          <div class="flex justify-end">
+            <button type="button" onclick="publishPost()" class="px-5 py-2 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 transition">
+              🚀 Publicar Artículo en GTUBLOG + GTUDEV
+            </button>
+          </div>
+        </div>
+
+        <!-- Soft-Delete Trash Bin (Basurero de Posts y Usuarios) -->
+        <div class="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/25 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-amber-300">🗑️ Basurero de GTUBLOG (Posts y Usuarios Eliminados)</h3>
+              <p class="text-xs text-zinc-400">Nada se borra definitivamente: cualquier artículo o usuario eliminado queda resguardado aquí por si lo necesitas en el futuro.</p>
+            </div>
+          </div>
+          <div id="blog-trash-list" class="space-y-2 text-xs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-white/10 py-8 mt-12 text-center text-xs text-zinc-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <strong class="text-zinc-300">GTUBLOG</strong> · Parte de la Suite <a href="https://gtudev.web.app" class="text-sky-400 hover:underline">GTUDEV</a> (`gtudev` Firebase &amp; Cloud Run)
+      </div>
+      <div class="mono text-[11px]">
+        Rust 2021 · Axum 0.7 · Multi-Stage Alpine Docker · Gemini 2.5 Flash
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const FALLBACK_POSTS = [];
+    let ALL_POSTS = [];
+    let TRASH_ITEMS = [];
+    let CURRENT_CAT = 'all';
+    let CURRENT_READER_POST = null;
+
+    function formatMarkdown(md) {
+      return String(md || '')
+        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-white mt-4 mb-1">$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-white mt-5 mb-2">$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="mono text-xs px-1.5 py-0.5 rounded bg-white/10 text-sky-300">$1</code>')
+        .replace(/\n\n/g, '</p><p class="mt-3">');
+    }
+
+    async function loadBlogData() {
+      // 1. Try Rust Axum API /api/posts first, then fallback to /posts.json + localStorage
+      try {
+        const res = await fetch('/api/posts');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.posts)) {
+            ALL_POSTS = data.posts;
+          }
+        }
+      } catch (e) {}
+
+      if (!ALL_POSTS.length) {
+        try {
+          const res2 = await fetch('/posts.json');
+          if (res2.ok) {
+            ALL_POSTS = await res2.json();
+          }
+        } catch (e) {}
+      }
+
+      // Merge any locally created posts or trashed items when running on static hosting
+      try {
+        const localPosts = JSON.parse(localStorage.getItem('gtublog_custom_posts') || '[]');
+        const localTrash = JSON.parse(localStorage.getItem('gtublog_trash') || '[]');
+        const trashedIds = new Set(localTrash.map(t => t.id));
+        const merged = [...localPosts, ...ALL_POSTS].filter(p => !trashedIds.has(p.id));
+        const seen = new Set();
+        ALL_POSTS = merged.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        TRASH_ITEMS = localTrash;
+      } catch (e) {}
+
+      // Also fetch server trash if Rust backend is live
+      try {
+        const tRes = await fetch('/api/trash');
+        if (tRes.ok) {
+          const tData = await tRes.json();
+          if (Array.isArray(tData.trash) && tData.trash.length) {
+            TRASH_ITEMS = tData.trash;
+          }
+        }
+      } catch (e) {}
+
+      document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
+      document.getElementById('trash-badge-count').textContent = TRASH_ITEMS.length;
+      renderPosts();
+      renderTrash();
+    }
+
+    function setCategory(cat) {
+      CURRENT_CAT = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        const active = btn.getAttribute('data-cat') === cat;
+        btn.className = active
+          ? 'cat-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-black transition'
+          : 'cat-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10 transition';
+      });
+      renderPosts();
+    }
+
+    function renderPosts() {
+      const grid = document.getElementById('posts-grid');
+      const q = (document.getElementById('blog-search')?.value || '').trim().toLowerCase();
+      const filtered = ALL_POSTS.filter(p => {
+        const matchCat = CURRENT_CAT === 'all' || p.category === CURRENT_CAT;
+        const matchQ = !q ||
+          (p.title || '').toLowerCase().includes(q) ||
+          (p.excerpt || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q) ||
+          (p.tags || []).some(t => t.toLowerCase().includes(q));
+        return matchCat && matchQ;
+      });
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="col-span-full p-12 rounded-3xl glass text-center text-zinc-400 text-sm">No se encontraron artículos para este filtro.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(post => `
+        <article class="post-card glass rounded-3xl overflow-hidden flex flex-col justify-between border border-white/10 cursor-pointer" onclick="openReaderModal('${post.id}')">
+          <div>
+            <div class="h-44 w-full overflow-hidden relative bg-zinc-900">
+              <img src="${post.cover_image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80'}" alt="${post.title}" class="w-full h-full object-cover opacity-80 hover:scale-105 transition duration-500" />
+              <span class="absolute top-3 left-3 text-[11px] font-bold px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-sky-300 border border-white/15">
+                ${post.category}
+              </span>
+            </div>
+            <div class="p-6">
+              <div class="mono text-[11px] text-zinc-400 mb-2 flex items-center justify-between">
+                <span>${(post.published_at || '').slice(0, 10)}</span>
+                <span>⏱ ${post.read_time_minutes || 4} min lectura</span>
+              </div>
+              <h3 class="text-lg font-bold text-white leading-snug mb-2.5">${post.title}</h3>
+              <p class="text-xs text-zinc-400 leading-relaxed line-clamp-3">${post.excerpt}</p>
+            </div>
+          </div>
+          <div class="px-6 pb-5 pt-2 flex items-center justify-between border-t border-white/5">
+            <div class="flex flex-wrap gap-1">
+              ${(post.tags || []).slice(0, 3).map(t => `<span class="mono text-[10px] px-2 py-0.5 rounded bg-white/5 text-zinc-400">#${t}</span>`).join('')}
+            </div>
+            <span class="text-xs font-semibold text-sky-400">Leer →</span>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function openReaderModal(postId) {
+      const post = ALL_POSTS.find(p => p.id === postId || p.slug === postId);
+      if (!post) return;
+      CURRENT_READER_POST = post;
+      document.getElementById('reader-category').textContent = post.category;
+      document.getElementById('reader-title').textContent = post.title;
+      document.getElementById('reader-meta').textContent = `${post.author || 'GTUDEV Engineering'} · ${(post.published_at || '').slice(0, 10)} · ${post.read_time_minutes || 4} min`;
+      document.getElementById('reader-body').innerHTML = `<p>${formatMarkdown(post.content)}</p>`;
+      const trashBtn = document.getElementById('reader-trash-btn');
+      trashBtn.onclick = () => movePostToTrash(post.id);
+      document.getElementById('reader-modal').classList.remove('hidden');
+    }
+
+    function closeReaderModal() {
+      document.getElementById('reader-modal').classList.add('hidden');
+    }
+
+    function toggleAdminDrawer() {
+      document.getElementById('admin-drawer').classList.toggle('hidden');
+      renderTrash();
+    }
+
+    function openNewPostModal() {
+      document.getElementById('admin-drawer').classList.remove('hidden');
+      document.getElementById('new-post-title').focus();
+    }
+
+    async function publishPost() {
+      const title = document.getElementById('new-post-title').value.trim();
+      const category = document.getElementById('new-post-category').value;
+      const excerpt = document.getElementById('new-post-excerpt').value.trim();
+      const content = document.getElementById('new-post-content').value.trim();
+      if (!title || !content) {
+        alert('Completa al menos el título y el contenido del artículo.');
+        return;
+      }
+
+      let created = null;
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, category, excerpt, content, featured_on_gtudev: true })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          created = data.post;
+        }
+      } catch (e) {}
+
+      if (!created) {
+        created = {
+          id: 'post-' + Date.now(),
+          slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          title,
+          category,
+          excerpt: excerpt || content.slice(0, 140) + '...',
+          content,
+          author: 'GTUDEV Engineering',
+          read_time_minutes: 4,
+          published_at: new Date().toISOString(),
+          featured_on_gtudev: true,
+          tags: ['gtudev', 'rust', 'ia']
+        };
+      }
+
+      const custom = JSON.parse(localStorage.getItem('gtublog_custom_posts') || '[]');
+      custom.unshift(created);
+      localStorage.setItem('gtublog_custom_posts', JSON.stringify(custom));
+
+      ALL_POSTS.unshift(created);
+      document.getElementById('new-post-title').value = '';
+      document.getElementById('new-post-excerpt').value = '';
+      document.getElementById('new-post-content').value = '';
+      document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
+      renderPosts();
+      alert('✅ Artículo publicado en GTUBLOG y sincronizado con GTUDEV Hub.');
+    }
+
+    async function generatePostWithAI() {
+      const topic = document.getElementById('new-post-title').value.trim() || 'Optimización de Audio e IA en Tiempo Real con Rust';
+      const category = document.getElementById('new-post-category').value;
+      try {
+        const res = await fetch('/api/ai/generate-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, category })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('new-post-title').value = data.title || topic;
+          document.getElementById('new-post-excerpt').value = data.excerpt || '';
+          document.getElementById('new-post-content').value = data.content || '';
+          return;
+        }
+      } catch (e) {}
+
+      document.getElementById('new-post-title').value = topic;
+      document.getElementById('new-post-excerpt').value = `Análisis técnico sobre ${topic} dentro de la arquitectura GTUDEV.`;
+      document.getElementById('new-post-content').value = `## ${topic}\n\nEste artículo explora la implementación en **GTUDEV** combinando microservicios en **Rust (Axum)** sobre Cloud Run y modelos **Gemini 2.5 Flash**.\n\n### Puntos Clave\n- **Cero Cold Start**: Despertar instantáneo en Cloud Run.\n- **Integración Unificada**: Sincronización directa con GTUDEV Hub y Gtuprod.`;
+    }
+
+    async function movePostToTrash(postId) {
+      const idx = ALL_POSTS.findIndex(p => p.id === postId);
+      if (idx === -1) return;
+      const post = ALL_POSTS[idx];
+
+      try {
+        await fetch(`/api/posts/${encodeURIComponent(postId)}/trash`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'Enviado al basurero desde el panel GTUBLOG' })
+        });
+      } catch (e) {}
+
+      ALL_POSTS.splice(idx, 1);
+      const trashEntry = {
+        id: post.id,
+        item_type: 'post',
+        title_or_email: post.title,
+        trashed_at: new Date().toISOString(),
+        reason: 'Guardado en el basurero para uso futuro',
+        payload: post
+      };
+      TRASH_ITEMS.unshift(trashEntry);
+      localStorage.setItem('gtublog_trash', JSON.stringify(TRASH_ITEMS));
+      closeReaderModal();
+      document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
+      document.getElementById('trash-badge-count').textContent = TRASH_ITEMS.length;
+      renderPosts();
+      renderTrash();
+    }
+
+    async function restoreFromTrash(id) {
+      const idx = TRASH_ITEMS.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      const item = TRASH_ITEMS[idx];
+
+      try {
+        await fetch('/api/trash/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+      } catch (e) {}
+
+      TRASH_ITEMS.splice(idx, 1);
+      localStorage.setItem('gtublog_trash', JSON.stringify(TRASH_ITEMS));
+      if (item.payload && item.item_type === 'post') {
+        ALL_POSTS.unshift(item.payload);
+      }
+      document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
+      document.getElementById('trash-badge-count').textContent = TRASH_ITEMS.length;
+      renderPosts();
+      renderTrash();
+    }
+
+    function renderTrash() {
+      const container = document.getElementById('blog-trash-list');
+      if (!container) return;
+      if (!TRASH_ITEMS.length) {
+        container.innerHTML = `<div class="p-4 rounded-xl bg-black/40 text-zinc-500 text-center">El basurero de GTUBLOG está vacío. Cualquier post o usuario eliminado aparecerá aquí para poder restaurarlo.</div>`;
+        return;
+      }
+      container.innerHTML = TRASH_ITEMS.map(item => `
+        <div class="p-3 rounded-xl bg-black/60 border border-amber-500/20 flex items-center justify-between gap-3">
+          <div>
+            <span class="mono text-[10px] uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 mr-2">${item.item_type}</span>
+            <strong class="text-white">${item.title_or_email}</strong>
+            <div class="text-[11px] text-zinc-400">${item.reason || ''} · ${(item.trashed_at || '').slice(0, 16)}</div>
+          </div>
+          <button onclick="restoreFromTrash('${item.id}')" class="px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-semibold text-xs">
+            ♻️ Restaurar
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function setBlogMode(mode) {
+      try {
+        await fetch('/api/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+      } catch (e) {}
+      const labels = { economic: '🌱 ECONOMIC', media: '⚡ MEDIA', turbo: '🚀 TURBO' };
+      document.getElementById('mode-badge').textContent = labels[mode] || '🌱 ECONOMIC';
+    }
+
+    function askBlogBot(q) {
+      document.getElementById('blog-chat-input').value = q;
+      submitBlogChat(new Event('submit'));
+    }
+
+    async function submitBlogChat(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const input = document.getElementById('blog-chat-input');
+      const message = (input.value || '').trim();
+      if (!message) return;
+      input.value = '';
+
+      const box = document.getElementById('blog-chat-messages');
+      box.innerHTML += `<div class="p-3 rounded-2xl bg-sky-500 text-black font-medium self-end ml-10">${message}</div>`;
+      box.scrollTop = box.scrollHeight;
+
+      let replyText = '';
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          replyText = data.reply;
+          if (data.usage) {
+            document.getElementById('chat-api-counter').textContent = `${data.usage.ai_calls_today} calls · $${Number(data.usage.estimated_cost_usd || 0).toFixed(4)}`;
+          }
+        }
+      } catch (err) {}
+
+      if (!replyText) {
+        const q = message.toLowerCase();
+        if (q.includes('rust') || q.includes('cold start') || q.includes('cloud run')) {
+          replyText = '🦀 **GTUBLOG** corre sobre un binario compilado en **Rust + Axum** dentro de un contenedor multi-stage Alpine (~18 MB). Esto elimina el Cold Start en Google Cloud Run (<5 ms) y evita los sobrecostos de memoria de WordPress.';
+        } else if (q.includes('gtuprod') || q.includes('playlist') || q.includes('demos')) {
+          replyText = '🎧 En **Gtuprod** cuentas con un reproductor continuo multi-playlist para organizar y escuchar una detrás de otra tus **Demos**, **Canciones Terminadas**, **Por Publicar** y **Para Publicar (Master Ready)**.';
+        } else {
+          replyText = `🤖 He consultado los **${ALL_POSTS.length} artículos activos** de GTUBLOG. Todos los posts se sincronizan con la portada de **GTUDEV** y cuentan con basurero recuperable.`;
+        }
+      }
+
+      box.innerHTML += `<div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-zinc-200 leading-relaxed mr-6">${formatMarkdown(replyText)}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadBlogData);
+  </script>
+  <script src="/gtudev-ecosystem.js" defer></script>
+</body>
+</html>

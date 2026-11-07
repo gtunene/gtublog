@@ -1,0 +1,26 @@
+[package]
+name = "gtublog"
+version = "1.0.0"
+edition = "2021"
+authors = ["GTUDEV <info@dev.gtunene.com>"]
+description = "Ultralight Rust (Axum) AI Blog & CMS for GTUDEV Ecosystem on Google Cloud Run (Zero Cold Start)"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1.40", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

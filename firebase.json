@@ -1,0 +1,31 @@
+{
+  "hosting": {
+    "site": "gtublog",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "gtublog",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/healthz",
+        "run": {
+          "serviceId": "gtublog",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
