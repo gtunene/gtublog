@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createGtublogServer } from '../server.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -37,4 +38,76 @@ test('3. gtublog seed posts and frontend include AI Chatbot, 3 modes, and Soft-D
   assert.match(html, /GTUBLOG/);
   assert.match(html, /Basurero/);
   assert.match(html, /gtudev-ecosystem\.js/);
+});
+
+test('4. Live HTTP Server endpoints: /healthz, /api/posts, /api/trash, /api/trash/restore, /api/mode, /api/chat', async () => {
+  const server = createGtublogServer();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address();
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    // 1. Healthz
+    const hRes = await fetch(`${baseUrl}/healthz`);
+    assert.equal(hRes.status, 200);
+    const hData = await hRes.json();
+    assert.equal(hData.service, 'gtublog');
+    assert.equal(hData.runtime, 'rust-axum-alpine');
+    assert.equal(hData.active_posts, 6);
+
+    // 2. Create Post
+    const createRes = await fetch(`${baseUrl}/api/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Test Post Rust Cloud Run',
+        content: 'Contenido de prueba en Rust.',
+        category: 'Arquitectura & Cloud'
+      })
+    });
+    assert.equal(createRes.status, 201);
+    const created = await createRes.json();
+    const postId = created.post.id;
+
+    // 3. Soft-Delete Post to Trash Bin (Basurero)
+    const trashRes = await fetch(`${baseUrl}/api/posts/${encodeURIComponent(postId)}/trash`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'Prueba de basurero' })
+    });
+    assert.equal(trashRes.status, 200);
+
+    const listTrash = await (await fetch(`${baseUrl}/api/trash`)).json();
+    assert.equal(listTrash.count, 1);
+    assert.equal(listTrash.trash[0].id, postId);
+
+    // 4. Restore Post from Trash Bin
+    const restoreRes = await fetch(`${baseUrl}/api/trash/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: postId })
+    });
+    assert.equal(restoreRes.status, 200);
+
+    // 5. Switch Quota Mode & Ask AI Chatbot
+    const modeRes = await fetch(`${baseUrl}/api/mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'turbo' })
+    });
+    const modeData = await modeRes.json();
+    assert.equal(modeData.mode, 'turbo');
+    assert.equal(modeData.ai_daily_limit, 1000);
+
+    const chatRes = await fetch(`${baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '¿Por qué usamos Rust y Axum en Cloud Run?' })
+    });
+    const chatData = await chatRes.json();
+    assert.equal(chatData.ok, true);
+    assert.match(chatData.reply, /Rust/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
