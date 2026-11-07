@@ -4,14 +4,14 @@
 # =============================================================================
 
 # Stage 1: Builder (Rust + musl static target on Alpine)
-FROM rust:1.83-alpine AS builder
+FROM rust:alpine AS builder
 
 RUN apk add --no-cache musl-dev pkgconfig openssl-dev openssl-libs-static ca-certificates
 
 WORKDIR /app
 
 # Cache dependencies first for fast incremental builds
-COPY Cargo.toml ./
+COPY Cargo.toml Cargo.lock* ./
 RUN mkdir -p src && \
     echo "fn main() { println!(\"dependency cache\"); }" > src/main.rs && \
     cargo build --release && \

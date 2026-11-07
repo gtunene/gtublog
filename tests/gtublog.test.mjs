@@ -13,7 +13,7 @@ test('1. gtublog project structure has Rust Cargo.toml, Axum main.rs, and multi-
 
   assert.match(cargo, /name = "gtublog"/);
   assert.match(cargo, /axum = .*0\.7/);
-  assert.match(dockerfile, /FROM rust:1\.83-alpine AS builder/);
+  assert.match(dockerfile, /FROM rust:.*alpine AS builder/);
   assert.match(dockerfile, /FROM alpine:3\.20/);
   assert.match(mainRs, /\/api\/posts/);
   assert.match(mainRs, /\/api\/chat/);
