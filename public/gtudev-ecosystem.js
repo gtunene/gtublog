@@ -27,7 +27,8 @@
     if (host.includes('promoagent') || title.includes('promo')) {
       return {
         id: 'promo',
-        name: 'Promo Agent',
+        name: 'promoagent',
+        color: '#10b981',
         tagline: 'Curaduría y pitching inteligente para lanzamientos musicales.',
         features: 'Análisis acústico, pitching editorial a curadores de Spotify y salas de escucha privadas.'
       };
@@ -35,15 +36,17 @@
     if (host.includes('smmgtuagent') || title.includes('smm')) {
       return {
         id: 'smm',
-        name: 'SMM Autonomous',
+        name: 'smmgtuagent',
+        color: '#0ea5e9',
         tagline: 'Crecimiento orgánico y gestión multicanal para artistas.',
-        features: 'Sincronización con Instagram, TikTok, YouTube, Facebook y Threads, curva armónica y auditoría de audiencia.'
+        features: 'Sincronización con Instagram, TikTok, YouTube, Facebook y Threads, curva armónica y catálogo Peakerr.'
       };
     }
     if (host.includes('musicscore') || title.includes('vocal') || title.includes('score')) {
       return {
         id: 'vocal',
-        name: 'Vocal Score Studio',
+        name: 'musicscore',
+        color: '#f59e0b',
         tagline: 'Separación de stems y transcripción vocal de precisión.',
         features: 'Aislamiento vocal, transcripción automática a MusicXML y partituras PDF listas para estudio.'
       };
@@ -51,7 +54,8 @@
     if (host.includes('aigtucreator') || title.includes('creative') || title.includes('creator')) {
       return {
         id: 'creator',
-        name: 'AI Gtu Creator',
+        name: 'aigtucreator',
+        color: '#d946ef',
         tagline: 'Dirección visual, storyboards y videoclips a partir de tus letras.',
         features: 'Consistencia de personaje, análisis de canciones y galería sincronizada en Google Cloud Storage.'
       };
@@ -59,7 +63,8 @@
     if (host.includes('gtuprod') || title.includes('gtuprod')) {
       return {
         id: 'gtuprod',
-        name: 'Gtuprod',
+        name: 'gtuprod',
+        color: '#f43f5e',
         tagline: 'Ingeniería acústica, telemetría LUFS, mastering y reproductor multi-playlist.',
         features: 'Medición de sonoridad en tiempo real, cadena DSP vocal, playlists continuas (Demos, Canciones Terminadas, Por Publicar y Para Publicar) y diagnóstico técnico.'
       };
@@ -67,16 +72,18 @@
     if (host.includes('gtublog') || title.includes('gtublog')) {
       return {
         id: 'gtublog',
-        name: 'GTUBLOG',
+        name: 'gtublog',
+        color: '#a855f7',
         tagline: 'Blog editorial de ingeniería IA, música y arquitectura Rust Zero Cold Start.',
-        features: 'Backend ultraligero en Rust (Axum + Alpine Docker) en Cloud Run, artículos técnicos sincronizados con GTUDEV, redacción con Gemini 2.5 y Basurero CMS.'
+        features: 'Backend ultraligero en Rust (Axum + Alpine Docker) en Cloud Run, artículos técnicos sincronizados con gtudev, redacción con Gemini 2.5 y Basurero CMS.'
       };
     }
     return {
       id: 'hub',
-      name: 'GTUDEV',
+      name: 'gtudev',
+      color: '#00f2fe',
       tagline: 'Suite creativa e inteligencia artificial para la música.',
-      features: 'Seis herramientas diseñadas para potenciar la producción, el blog editorial, el arte visual y el lanzamiento de música.'
+      features: 'Siete herramientas diseñadas para potenciar la producción, el blog editorial, el arte visual y el lanzamiento de música.'
     };
   }
 
@@ -627,9 +634,9 @@
       <button id="gtudev-floating-admin-pill" onclick="window.openGtudevAdminModal()" title="Abrir Panel de Administración">
         <span>⚙️</span> <span>Admin</span>
       </button>
-      <button id="gtudev-chat-fab" title="Hablar con el asistente">
-        <span class="dot"></span>
-        <span>Asistente</span>
+      <button id="gtudev-chat-fab" title="Hablar con el asistente de ${APP_CTX.name}" style="border-color:${APP_CTX.color || '#38bdf8'};">
+        <span class="dot" style="background:${APP_CTX.color || '#30d158'};box-shadow:0 0 8px ${APP_CTX.color || '#30d158'};"></span>
+        <span>💬 Asistente · ${APP_CTX.name}</span>
       </button>
     `;
     document.body.appendChild(stack);
@@ -990,12 +997,12 @@
     const container = document.getElementById('gtu-admin-switches-container');
     if (!container) return;
     const items = [
-      { type: 'agents', key: 'promo', label: 'Promo Agent (Curadores & Pitching)' },
-      { type: 'agents', key: 'smm', label: 'SMM Autonomous Agent (5 Redes)' },
-      { type: 'agents', key: 'vocal', label: 'Vocal Score Studio (Transcripción IA)' },
-      { type: 'agents', key: 'creator', label: 'AI Gtu Creator (Generación Visual)' },
-      { type: 'agents', key: 'gtuprod', label: 'Gtuprod (Mastering, Playlists & Telemetría)' },
-      { type: 'agents', key: 'gtublog', label: 'GTUBLOG (CMS Rust Cloud Run & IA Editorial)' },
+      { type: 'agents', key: 'promo', label: 'promoagent (Curadores & Pitching)' },
+      { type: 'agents', key: 'smm', label: 'smmgtuagent (5 Redes & Peakerr)' },
+      { type: 'agents', key: 'vocal', label: 'musicscore (Transcripción IA)' },
+      { type: 'agents', key: 'creator', label: 'aigtucreator (Generación Visual)' },
+      { type: 'agents', key: 'gtuprod', label: 'gtuprod (Mastering, Playlists & Telemetría)' },
+      { type: 'agents', key: 'gtublog', label: 'gtublog (CMS Rust Cloud Run & IA Editorial)' },
       { type: 'promotions', key: 'spotify_pitch', label: 'Promoción: Pitching Automático Spotify' },
       { type: 'promotions', key: 'peakerr_boost', label: 'Promoción: Impulso Social & Drip-Feed' }
     ];
