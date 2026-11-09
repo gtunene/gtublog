@@ -107,6 +107,32 @@ test('4. Live HTTP Server endpoints: /healthz, /api/posts, /api/trash, /api/tras
     const chatData = await chatRes.json();
     assert.equal(chatData.ok, true);
     assert.match(chatData.reply, /Rust/);
+
+    // 6. WordPress-Rust Media Files (/api/files) & WooCommerce Store (/api/products)
+    const fileRes = await fetch(`${baseUrl}/api/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_name: 'Sabadete_Preset_Master.zip',
+        category: 'Producción & Mastering',
+        price_usd: 0
+      })
+    });
+    assert.equal(fileRes.status, 201);
+
+    const prodRes = await fetch(`${baseUrl}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Beat Exclusivo + Stems WAV 24-Bit',
+        category: 'Beats & Instrumentales',
+        price_usd: 49.99,
+        sale_price_usd: 29.99
+      })
+    });
+    assert.equal(prodRes.status, 201);
+    const prodsList = await (await fetch(`${baseUrl}/api/products`)).json();
+    assert.ok(prodsList.products.some(p => p.title.includes('Beat Exclusivo')));
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

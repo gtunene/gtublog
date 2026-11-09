@@ -35,8 +35,44 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-black">
 
+  <!-- WordPress-Style Top Admin Bar (WP-GTUBLOG Rust 6.7) -->
+  <div id="wpadminbar" class="sticky top-0 z-50 bg-[#1d2327] border-b border-[#2c3338] text-[#c3c4c7] text-xs select-none shadow-md">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-9 flex items-center justify-between gap-2 overflow-x-auto">
+      <div class="flex items-center gap-1 sm:gap-3 whitespace-nowrap">
+        <span class="inline-flex items-center gap-1.5 font-bold text-white px-2 py-1 rounded bg-[#2271b1] text-[11px]">
+          <span>🦀</span> <span>WP-GTUBLOG Rust</span>
+        </span>
+        <button type="button" onclick="toggleWpAdminWorkspace(false)" id="wpbar-btn-public" class="px-2.5 py-1 rounded hover:bg-[#2c3338] text-white font-semibold transition">
+          🏠 Ver Sitio Público
+        </button>
+        <button type="button" onclick="toggleWpAdminWorkspace(true, 'dashboard')" id="wpbar-btn-admin" class="px-2.5 py-1 rounded hover:bg-[#2c3338] text-sky-300 font-semibold transition">
+          📊 Escritorio wp-admin
+        </button>
+        <span class="text-zinc-600">|</span>
+        <button type="button" onclick="toggleWpAdminWorkspace(true, 'editor')" class="px-2.5 py-1 rounded hover:bg-[#2271b1] hover:text-white text-emerald-300 font-semibold transition">
+          ➕ Nueva Entrada / Artículo
+        </button>
+        <button type="button" onclick="toggleWpAdminWorkspace(true, 'media')" class="px-2.5 py-1 rounded hover:bg-[#2271b1] hover:text-white text-amber-300 font-semibold transition">
+          📁 Cargar Archivo Descargable
+        </button>
+        <button type="button" onclick="toggleWpAdminWorkspace(true, 'store')" class="px-2.5 py-1 rounded hover:bg-[#2271b1] hover:text-white text-pink-300 font-semibold transition">
+          🛒 Poner Producto en Venta
+        </button>
+      </div>
+      <div class="flex items-center gap-3 whitespace-nowrap">
+        <a href="#tienda-section" onclick="toggleWpAdminWorkspace(false)" class="px-2.5 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 font-bold text-[11px]">
+          🛒 En Venta: <span id="wpbar-products-count">4</span>
+        </a>
+        <a href="#archivos-section" onclick="toggleWpAdminWorkspace(false)" class="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-[11px]">
+          ⬇ Descargas: <span id="wpbar-files-count">3</span>
+        </a>
+        <span class="hidden md:inline text-[11px] text-zinc-400">Hola, <strong class="text-white">Gtunene (Admin)</strong></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Ecosystem Bar -->
-  <header class="sticky top-0 z-40 glass border-b border-purple-500/30" style="border-top: 3px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.18) 0%, rgba(18,18,22,0.88) 42%); box-shadow: 0 4px 24px rgba(168,85,247,0.15);">
+  <header class="sticky top-9 z-40 glass border-b border-purple-500/30" style="border-top: 3px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.18) 0%, rgba(18,18,22,0.88) 42%); box-shadow: 0 4px 24px rgba(168,85,247,0.15);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <a href="https://gtudev-suite.web.app" class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 transition">
@@ -50,20 +86,22 @@
             <div class="flex items-center gap-2">
               <span class="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 text-base">gtublog</span>
               <span class="mono text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30 font-semibold">
-                Rust Axum · 0ms Cold Start
+                WordPress-Rust CMS + WooCommerce
               </span>
             </div>
-            <p class="text-[11px] text-zinc-400 hidden sm:block">Ingeniería IA, Archivos Descargables, Wallet &amp; PayPal Business</p>
+            <p class="text-[11px] text-zinc-400 hidden sm:block">Artículos, Archivos Descargables y Tienda Online en Rust Axum</p>
           </div>
         </div>
       </div>
 
       <nav class="hidden md:flex items-center gap-5 text-xs font-medium text-zinc-400">
-        <a href="#articulos" class="hover:text-white transition">Artículos</a>
-        <a href="#archivos-section" class="hover:text-emerald-400 font-semibold transition">📁 Cargar Archivos</a>
-        <a href="#pagos-section" class="hover:text-amber-400 font-semibold transition">💳 Wallet &amp; PayPal Business</a>
-        <a href="#chatbot-section" class="hover:text-white transition">Chatbot IA</a>
-        <a href="https://gtuprod-suite.web.app" class="hover:text-purple-400 transition">gtuprod ↗</a>
+        <a href="#articulos" onclick="toggleWpAdminWorkspace(false)" class="hover:text-white transition">📝 Artículos</a>
+        <a href="#tienda-section" onclick="toggleWpAdminWorkspace(false)" class="hover:text-pink-400 font-bold text-pink-300 transition">🛒 Tienda (En Venta)</a>
+        <a href="#archivos-section" onclick="toggleWpAdminWorkspace(false)" class="hover:text-emerald-400 font-semibold text-emerald-300 transition">📁 Descargas y Archivos</a>
+        <a href="#pagos-section" onclick="toggleWpAdminWorkspace(false)" class="hover:text-amber-400 font-semibold transition">💳 Wallet &amp; PayPal</a>
+        <button type="button" onclick="toggleWpAdminWorkspace(true, 'dashboard')" class="px-3 py-1 rounded-lg bg-[#2271b1] hover:bg-[#135e96] text-white font-bold transition">
+          📊 Panel WordPress (wp-admin)
+        </button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -74,12 +112,300 @@
           🌱 ECONOMIC
         </div>
         <button onclick="toggleAdminDrawer()" class="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5">
-          <span>⚙️</span> <span>CMS & Basurero</span>
+          <span>⚙️</span> <span>CMS Rápido</span>
           <span id="trash-badge-count" class="mono text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded-full">0</span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- ===================================================================== -->
+  <!-- 📊 ESCRITORIO WORDPRESS EN RUST (wp-admin + Gutenberg + WooCommerce)  -->
+  <!-- ===================================================================== -->
+  <section id="wp-admin-workspace" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-3xl overflow-hidden border border-[#2c3338] bg-[#101517] shadow-2xl">
+      <!-- Left WordPress Admin Sidebar -->
+      <aside class="lg:col-span-3 bg-[#1d2327] border-r border-[#2c3338] p-4 flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="px-3 py-2 mb-2 border-b border-[#2c3338] flex items-center justify-between">
+            <div>
+              <div class="text-xs font-extrabold text-white tracking-wide">WP-ADMIN · RUST</div>
+              <div class="text-[10px] text-zinc-400 mono">Axum 0.7 + IndexedDB</div>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">ONLINE</span>
+          </div>
+
+          <button type="button" onclick="switchWpTab('dashboard')" id="wptab-btn-dashboard" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#2271b1] text-white flex items-center justify-between transition">
+            <span>📊 Escritorio</span>
+            <span class="text-[10px] opacity-80">WP</span>
+          </button>
+          <button type="button" onclick="switchWpTab('posts')" id="wptab-btn-posts" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-300 hover:bg-[#2c3338] flex items-center justify-between transition">
+            <span>📝 Todas las Entradas</span>
+            <span id="wp-sidebar-posts-count" class="mono text-[10px] px-2 py-0.5 rounded-full bg-white/10">6</span>
+          </button>
+          <button type="button" onclick="switchWpTab('editor')" id="wptab-btn-editor" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-emerald-300 hover:bg-[#2c3338] flex items-center justify-between transition">
+            <span>✍️ Añadir / Editar Artículo</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20">+ Nuevo</span>
+          </button>
+          <button type="button" onclick="switchWpTab('media')" id="wptab-btn-media" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-amber-300 hover:bg-[#2c3338] flex items-center justify-between transition">
+            <span>📁 Medios y Descargas</span>
+            <span id="wp-sidebar-files-count" class="mono text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20">3</span>
+          </button>
+          <button type="button" onclick="switchWpTab('store')" id="wptab-btn-store" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-pink-300 hover:bg-[#2c3338] flex items-center justify-between transition">
+            <span>🛒 WooCommerce / En Venta</span>
+            <span id="wp-sidebar-products-count" class="mono text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20">4</span>
+          </button>
+          <button type="button" onclick="switchWpTab('trash')" id="wptab-btn-trash" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-300 hover:bg-[#2c3338] flex items-center justify-between transition">
+            <span>🗑️ Papelera / Basurero</span>
+            <span id="wp-sidebar-trash-count" class="mono text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300">0</span>
+          </button>
+        </div>
+
+        <div class="pt-4 mt-6 border-t border-[#2c3338] space-y-2">
+          <button type="button" onclick="toggleWpAdminWorkspace(false)" class="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">
+            🌐 Volver a Vista Pública del Blog
+          </button>
+        </div>
+      </aside>
+
+      <!-- Right WordPress Admin Content Area -->
+      <div class="lg:col-span-9 p-6 sm:p-8 space-y-6 bg-[#0b0e11]">
+        <!-- TAB 1: DASHBOARD -->
+        <div id="wptab-panel-dashboard" class="space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white">Escritorio de WordPress-Rust (GTUBLOG)</h2>
+              <p class="text-xs text-zinc-400 mt-1">Gestiona tus artículos, sube archivos para que la gente descargue y pon productos/servicios en venta.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" onclick="switchWpTab('editor')" class="px-4 py-2 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white font-bold text-xs transition">✍️ Escribir Artículo</button>
+              <button type="button" onclick="switchWpTab('media')" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition">📁 Subir Archivo Descargable</button>
+              <button type="button" onclick="switchWpTab('store')" class="px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-extrabold text-xs transition">🛒 Poner Cosa en Venta</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-5 rounded-2xl bg-[#1d2327] border border-white/10">
+              <div class="text-xs text-zinc-400">📝 Entradas Publicadas</div>
+              <div id="wp-stat-posts" class="text-3xl font-extrabold text-white mt-1">6</div>
+              <button type="button" onclick="switchWpTab('posts')" class="text-xs text-sky-400 hover:underline mt-2 inline-block">Gestionar artículos →</button>
+            </div>
+            <div class="p-5 rounded-2xl bg-[#1d2327] border border-emerald-500/30">
+              <div class="text-xs text-emerald-300">📁 Archivos para Descargar</div>
+              <div id="wp-stat-files" class="text-3xl font-extrabold text-emerald-400 mt-1">3</div>
+              <button type="button" onclick="switchWpTab('media')" class="text-xs text-emerald-300 hover:underline mt-2 inline-block">Subir WAV/ZIP/PDF →</button>
+            </div>
+            <div class="p-5 rounded-2xl bg-[#1d2327] border border-pink-500/30">
+              <div class="text-xs text-pink-300">🛒 Productos en Venta</div>
+              <div id="wp-stat-products" class="text-3xl font-extrabold text-pink-400 mt-1">4</div>
+              <button type="button" onclick="switchWpTab('store')" class="text-xs text-pink-300 hover:underline mt-2 inline-block">Añadir producto en venta →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: ALL POSTS TABLE (WordPress Entradas) -->
+        <div id="wptab-panel-posts" class="hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-white/10 pb-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-white">📝 Entradas del Blog</h3>
+              <p class="text-xs text-zinc-400">Edita cualquier artículo, adjunta descargas o envíalo a la papelera.</p>
+            </div>
+            <button type="button" onclick="openWpPostEditor()" class="px-4 py-2 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white font-bold text-xs">➕ Añadir Nueva Entrada</button>
+          </div>
+          <div id="wp-posts-table-list" class="space-y-2.5"></div>
+        </div>
+
+        <!-- TAB 3: GUTENBERG / CLASSIC WORDPRESS EDITOR -->
+        <div id="wptab-panel-editor" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <h3 id="wp-editor-heading" class="text-xl font-extrabold text-white">✍️ Editor de Artículos WordPress-Rust</h3>
+              <p class="text-xs text-zinc-400">Escribe tu artículo, inserta botones de descarga de archivos o incrusta productos en venta directamente en el post.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="generateWpEditorWithAI()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-sky-500 text-black font-extrabold text-xs">
+                ✨ Redactar con IA Gemini
+              </button>
+              <button type="button" onclick="saveWpArticle()" class="px-5 py-2 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white font-extrabold text-xs shadow-lg">
+                🚀 Publicar / Actualizar Artículo
+              </button>
+            </div>
+          </div>
+
+          <input type="hidden" id="wp-edit-post-id" value="" />
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="lg:col-span-8 space-y-3">
+              <input id="wp-post-title" type="text" placeholder="Añade el título del artículo aquí..." class="w-full bg-[#1d2327] border border-white/15 rounded-xl px-4 py-3 text-base font-bold text-white focus:outline-none focus:border-sky-400" />
+              <input id="wp-post-excerpt" type="text" placeholder="Extracto / Resumen corto del artículo..." class="w-full bg-[#1d2327] border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+
+              <!-- Formatting & Shortcode Toolbar -->
+              <div class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-[#1d2327] border border-white/10 text-xs">
+                <button type="button" onclick="insertEditorSyntax('**', '**')" class="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 font-bold text-white">B</button>
+                <button type="button" onclick="insertEditorSyntax('## ', '')" class="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 font-bold text-white">H2</button>
+                <button type="button" onclick="insertEditorSyntax('### ', '')" class="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 font-bold text-white">H3</button>
+                <button type="button" onclick="insertEditorSyntax('`', '`')" class="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 mono text-sky-300">&lt;/&gt;</button>
+                <span class="text-zinc-600 mx-1">|</span>
+                <select id="wp-insert-file-select" class="bg-black border border-emerald-500/40 rounded-lg px-2 py-1 text-[11px] text-emerald-300">
+                  <option value="">📁 Elegir archivo descargable...</option>
+                </select>
+                <button type="button" onclick="insertSelectedFileIntoArticle()" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px]">
+                  + Insertar Descarga en el Post
+                </button>
+                <select id="wp-insert-product-select" class="bg-black border border-pink-500/40 rounded-lg px-2 py-1 text-[11px] text-pink-300">
+                  <option value="">🛒 Elegir producto en venta...</option>
+                </select>
+                <button type="button" onclick="insertSelectedProductIntoArticle()" class="px-2.5 py-1 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30 font-semibold text-[11px]">
+                  + Insertar Producto en Venta
+                </button>
+              </div>
+
+              <textarea id="wp-post-content" rows="11" placeholder="Escribe el contenido completo de tu artículo aquí..." class="w-full bg-[#1d2327] border border-white/15 rounded-xl p-4 text-xs sm:text-sm text-white leading-relaxed focus:outline-none focus:border-sky-400"></textarea>
+            </div>
+
+            <!-- WordPress Right Meta Boxes (Category, Cover Image, Attached Download, Attached Product) -->
+            <div class="lg:col-span-4 space-y-3">
+              <div class="p-4 rounded-2xl bg-[#1d2327] border border-white/10 space-y-3">
+                <div class="text-xs font-bold uppercase text-sky-300">Categoría &amp; Estado</div>
+                <div>
+                  <label class="block text-[11px] text-zinc-400 mb-1">Categoría</label>
+                  <select id="wp-post-category" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
+                    <option value="Producción & Mastering">Producción &amp; Mastering</option>
+                    <option value="IA & Audio">IA &amp; Audio</option>
+                    <option value="Arquitectura & Cloud">Arquitectura &amp; Cloud</option>
+                    <option value="Lanzamientos & Promo">Lanzamientos &amp; Promo</option>
+                    <option value="Crecimiento Social">Crecimiento Social</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] text-zinc-400 mb-1">Etiquetas (separadas por coma)</label>
+                  <input id="wp-post-tags" type="text" value="gtudev, rust, musica, descargas" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-zinc-400 mb-1">Imagen Destacada (URL o Subir)</label>
+                  <input id="wp-post-cover" type="text" placeholder="https://images.unsplash.com/..." class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white mb-1.5" />
+                  <input type="file" accept="image/*" onchange="handleWpCoverUpload(event, 'wp-post-cover')" class="text-[11px] text-zinc-400 w-full" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-emerald-300 font-semibold mb-1">📁 Archivo Descargable Adjunto al Post</label>
+                  <select id="wp-post-attached-file" class="w-full bg-black border border-emerald-500/40 rounded-xl px-3 py-2 text-xs text-emerald-200">
+                    <option value="">-- Ningún archivo adjunto --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] text-pink-300 font-semibold mb-1">🛒 Producto en Venta Destacado en el Post</label>
+                  <select id="wp-post-attached-product" class="w-full bg-black border border-pink-500/40 rounded-xl px-3 py-2 text-xs text-pink-200">
+                    <option value="">-- Ningún producto destacado --</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: MEDIA & DOWNLOADABLE FILES MANAGER -->
+        <div id="wptab-panel-media" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-white">📁 Biblioteca de Medios y Archivos para Descargar</h3>
+              <p class="text-xs text-zinc-400">Sube archivos reales (WAV, MP3, ZIP, PDF, Stems, Presets). Quedan guardados en IndexedDB y listos para que tus lectores los descarguen gratis o previo pago.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('gtublog-file-input').click()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs">
+              📤 Subir Nuevos Archivos Ahora
+            </button>
+          </div>
+          <div id="wp-media-library-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- TAB 5: WOOCOMMERCE / PUT ITEMS FOR SALE -->
+        <div id="wptab-panel-store" class="hidden space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-white">🛒 WooCommerce Rust · Poner Cosas en Venta</h3>
+              <p class="text-xs text-zinc-400">Publica Beats, Stems, Sample Packs, Plugins, Servicios de Mezcla/Mastering o Productos Físicos en la tienda del blog.</p>
+            </div>
+          </div>
+
+          <!-- Form to Create / Edit Store Product -->
+          <div class="p-5 rounded-2xl bg-[#1d2327] border border-pink-500/30 space-y-4">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-pink-300">➕ Nuevo Producto o Servicio en Venta</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] text-zinc-400 mb-1">Nombre del Producto / Servicio en Venta</label>
+                <input id="store-prod-title" type="text" placeholder="Ej: Beat Exclusivo Reggaetón + Stems 24-bit WAV..." class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Categoría de Tienda</label>
+                <select id="store-prod-category" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
+                  <option value="Stems & Sample Packs">Stems &amp; Sample Packs</option>
+                  <option value="Beats & Instrumentales">Beats &amp; Instrumentales</option>
+                  <option value="Servicios Estudio (Mezcla/Master)">Servicios Estudio (Mezcla/Master)</option>
+                  <option value="Software & Plantillas Rust/IA">Software &amp; Plantillas Rust/IA</option>
+                  <option value="Licencias & Merch">Licencias &amp; Merch</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Precio Normal ($ USD)</label>
+                <input id="store-prod-price" type="number" min="0" step="0.5" value="29.99" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white mono" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Precio Oferta ($ USD opcional)</label>
+                <input id="store-prod-sale-price" type="number" min="0" step="0.5" placeholder="Ej: 19.99" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-emerald-300 mono" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Tipo de Producto</label>
+                <select id="store-prod-type" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
+                  <option value="digital">⚡ Descarga Digital Instantánea</option>
+                  <option value="service">🎛️ Servicio de Estudio / Reserva</option>
+                  <option value="license">📜 Licencia Musical / Beat</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-emerald-300 mb-1">Archivo Descargable Entregado</label>
+                <select id="store-prod-attached-file" class="w-full bg-black border border-emerald-500/40 rounded-xl px-3 py-2 text-xs text-emerald-200">
+                  <option value="">-- Sin archivo vinculado --</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Descripción Comercial / Qué incluye</label>
+                <input id="store-prod-desc" type="text" placeholder="Incluye licencia comercial WAV 24-bit, proyecto y entrega inmediata..." class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">Imagen de Portada (URL o Subir Foto)</label>
+                <div class="flex gap-2">
+                  <input id="store-prod-cover" type="text" placeholder="https://images.unsplash.com/..." class="flex-1 bg-black border border-white/15 rounded-xl px-3 py-2 text-xs text-white" />
+                  <label class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-white cursor-pointer whitespace-nowrap">
+                    📷 Subir Foto
+                    <input type="file" accept="image/*" class="hidden" onchange="handleWpCoverUpload(event, 'store-prod-cover')" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="button" onclick="createStoreProduct()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-95 text-white font-extrabold text-xs shadow-lg">
+                🛒 Publicar Producto en Venta en la Tienda
+              </button>
+            </div>
+          </div>
+
+          <div id="wp-store-admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- TAB 6: TRASH BIN -->
+        <div id="wptab-panel-trash" class="hidden space-y-4">
+          <h3 class="text-xl font-extrabold text-amber-300">🗑️ Papelera Recuperable de WordPress-Rust</h3>
+          <p class="text-xs text-zinc-400">Restaura artículos, archivos o productos eliminados con un clic.</p>
+          <div id="wp-trash-admin-list" class="space-y-2 text-xs"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Hero Section -->
   <section class="relative overflow-hidden py-14 sm:py-20 border-b border-white/10">
@@ -97,11 +423,14 @@
           Desarrollado en <strong>Rust + Axum</strong> para despertar en menos de <strong>5 milisegundos</strong> en Google Cloud Run. Incluye gestor para <strong>cargar archivos y recursos digitales</strong> y pasarela de cobros integrada mediante <strong>Wallet (Web3 &amp; GTU Wallet)</strong> y <strong>PayPal Business (<code>info@dev.gtunene.com</code>)</strong>, sincronizado con <a href="https://gtudev-suite.web.app" class="text-sky-400 underline hover:text-sky-300">GTUDEV</a>.
         </p>
         <div class="flex flex-wrap items-center gap-3">
-          <button onclick="openNewPostModal()" class="px-5 py-2.5 rounded-full bg-white text-black font-semibold text-xs sm:text-sm hover:bg-zinc-200 transition shadow-lg">
-            ✍️ Publicar / Generar Post con IA
+          <button onclick="toggleWpAdminWorkspace(true, 'editor')" class="px-5 py-2.5 rounded-full bg-[#2271b1] hover:bg-[#135e96] text-white font-bold text-xs sm:text-sm transition shadow-lg">
+            ✍️ Escribir Artículo (Editor WordPress)
           </button>
+          <a href="#tienda-section" class="px-5 py-2.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-300 font-bold text-xs sm:text-sm transition">
+            🛒 Tienda / Poner Cosas en Venta
+          </a>
           <a href="#archivos-section" class="px-5 py-2.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold text-xs sm:text-sm transition">
-            📁 Cargar Archivos &amp; Stems
+            📁 Cargar Archivos Descargables
           </a>
           <a href="#pagos-section" class="px-5 py-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-semibold text-xs sm:text-sm transition">
             💳 Pagos: Wallet &amp; PayPal Business
@@ -114,7 +443,7 @@
     </div>
   </section>
 
-  <!-- Main Content: Filter Bar + Posts Grid + Embedded AI Chatbot -->
+  <!-- Main Content: Filter Bar + Posts Grid + Store + Files + Embedded AI Chatbot -->
   <main id="articulos" class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <!-- Category Pills -->
@@ -135,6 +464,31 @@
 
     <!-- Posts Grid -->
     <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-14"></div>
+
+    <!-- =================================================================== -->
+    <!-- 🛒 TIENDA OFICIAL GTUBLOG · PRODUCTOS, BEATS, STEMS Y COSAS EN VENTA-->
+    <!-- =================================================================== -->
+    <section id="tienda-section" class="mb-14 glass rounded-3xl p-6 sm:p-8 border border-pink-500/35 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 mb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold mb-2">
+            🛒 TIENDA OFICIAL WOOCOMMERCE-RUST · COSAS EN VENTA
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-white">Productos Digitales, Stems, Beats, Licencias y Servicios en Venta</h2>
+          <p class="text-xs sm:text-sm text-zinc-400 mt-1">
+            Pon a la venta cualquier producto, archivo descargable, beat o servicio de estudio. Pago inmediato con <strong>PayPal Business (<code>info@dev.gtunene.com</code>)</strong> o <strong>Wallet</strong> y entrega automática del archivo.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="toggleWpAdminWorkspace(true, 'store')" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-95 text-white font-extrabold text-xs sm:text-sm transition shadow-lg">
+            ➕ Poner Nuevo Producto en Venta
+          </button>
+        </div>
+      </div>
+
+      <!-- Store Products Grid -->
+      <div id="store-products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+    </section>
 
     <!-- =================================================================== -->
     <!-- 📁 CARGAR ARCHIVOS & RECURSOS DIGITALES (STEMS, PDF, AUDIO, ZIP)    -->
@@ -649,8 +1003,58 @@
       CURRENT_READER_POST = post;
       document.getElementById('reader-category').textContent = post.category;
       document.getElementById('reader-title').textContent = post.title;
-      document.getElementById('reader-meta').textContent = `${post.author || 'GTUDEV Engineering'} · ${(post.published_at || '').slice(0, 10)} · ${post.read_time_minutes || 4} min`;
-      document.getElementById('reader-body').innerHTML = `<p>${formatMarkdown(post.content)}</p>`;
+      document.getElementById('reader-meta').textContent = `${post.author || 'GTUDEV Engineering'} · ${(post.published_at || '').slice(0, 10)} · ${post.read_time_minutes || post.read_time_min || 4} min`;
+
+      let bodyHtml = `<p>${formatMarkdown(post.content)}</p>`;
+
+      // If post has an attached downloadable file, render a prominent download box
+      if (post.attached_file_id) {
+        const f = UPLOADED_FILES.find(x => x.id === post.attached_file_id);
+        if (f) {
+          bodyHtml += `
+            <div class="mt-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/35 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div class="text-[10px] font-bold uppercase text-emerald-300">📁 Archivo Descargable Adjunto al Artículo</div>
+                <div class="text-sm font-bold text-white">${f.file_name} (${formatBytes(f.size_bytes)})</div>
+                <div class="text-xs text-zinc-400">${f.description || ''}</div>
+              </div>
+              <button type="button" onclick="downloadOrBuyFile('${f.id}')" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs">
+                ⬇ Descargar Archivo
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      // If post has an attached store product for sale, render a WooCommerce buy box
+      if (post.attached_product_id) {
+        const pr = STORE_PRODUCTS.find(x => x.id === post.attached_product_id);
+        if (pr) {
+          const effPrice = pr.sale_price_usd ? Number(pr.sale_price_usd) : Number(pr.price_usd);
+          bodyHtml += `
+            <div class="mt-4 p-4 rounded-2xl bg-pink-500/10 border border-pink-500/35 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div class="text-[10px] font-bold uppercase text-pink-300">🛒 Producto en Venta Destacado</div>
+                <div class="text-sm font-bold text-white">${pr.title} — <span class="text-emerald-400 mono">$${effPrice.toFixed(2)} USD</span></div>
+                <div class="text-xs text-zinc-400">${pr.description || ''}</div>
+              </div>
+              <button type="button" onclick="closeReaderModal(); buyStoreProduct('${pr.id}')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold text-xs">
+                🛒 Comprar Ahora ($${effPrice.toFixed(2)})
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      bodyHtml += `
+        <div class="mt-6 pt-4 border-t border-white/10 flex justify-end">
+          <button type="button" onclick="closeReaderModal(); openWpPostEditor('${post.id}')" class="px-4 py-1.5 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white font-bold text-xs">
+            ✏️ Editar Artículo en WordPress-Rust
+          </button>
+        </div>
+      `;
+
+      document.getElementById('reader-body').innerHTML = bodyHtml;
       const trashBtn = document.getElementById('reader-trash-btn');
       trashBtn.onclick = () => movePostToTrash(post.id);
       document.getElementById('reader-modal').classList.remove('hidden');
@@ -793,11 +1197,15 @@
       localStorage.setItem('gtublog_trash', JSON.stringify(TRASH_ITEMS));
       if (item.payload && item.item_type === 'post') {
         ALL_POSTS.unshift(item.payload);
+      } else if (item.payload && item.item_type === 'product') {
+        STORE_PRODUCTS.unshift(item.payload);
+        renderStoreProducts();
       }
       document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
       document.getElementById('trash-badge-count').textContent = TRASH_ITEMS.length;
       renderPosts();
       renderTrash();
+      syncWpAdminCountersAndSelects();
     }
 
     function renderTrash() {
@@ -925,12 +1333,139 @@
       }
     ];
 
+    const DEFAULT_STORE_PRODUCTS = [
+      {
+        id: 'prod-sabadete-master-stems',
+        title: 'Sabadete · Master Stems 24-Bit WAV + Proyecto Mezcla',
+        category: 'Stems & Sample Packs',
+        price_usd: 29.99,
+        sale_price_usd: 14.99,
+        description: 'Paquete oficial multipista 24-bit WAV + Cadena de Mastering LUFS (-14 LUFS Streaming). Entrega digital inmediata.',
+        cover_image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80',
+        product_type: 'digital',
+        attached_file_id: 'file-sabadete-stems-pack',
+        stock_status: 'in_stock',
+        created_at: '2026-11-08T10:00:00Z'
+      },
+      {
+        id: 'prod-rust-cloud-run-starter',
+        title: 'Plantilla WordPress-Rust Axum Zero Cold Start + PayPal Business',
+        category: 'Software & Plantillas Rust/IA',
+        price_usd: 39.00,
+        sale_price_usd: 19.99,
+        description: 'Código fuente completo en Rust (Axum 0.7) + Docker Alpine + CMS estilo WordPress + Pasarela Wallet/PayPal.',
+        cover_image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=80',
+        product_type: 'digital',
+        attached_file_id: 'file-rust-cloud-run-blueprint',
+        stock_status: 'in_stock',
+        created_at: '2026-11-08T12:00:00Z'
+      },
+      {
+        id: 'prod-vocal-dsp-pack',
+        title: 'Vocal Score Studio 5-Stage DSP Preset & Calibración MIDI',
+        category: 'Stems & Sample Packs',
+        price_usd: 19.00,
+        sale_price_usd: 9.99,
+        description: 'Preset profesional de calibración vocal en 5 etapas (YIN F0 + Rectificación Armónica MIDI/MusicXML).',
+        cover_image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80',
+        product_type: 'digital',
+        attached_file_id: 'file-vocal-score-dsp-preset',
+        stock_status: 'in_stock',
+        created_at: '2026-11-08T14:00:00Z'
+      },
+      {
+        id: 'prod-mixing-mastering-service',
+        title: 'Servicio de Mezcla & Mastering Analógico/Digital GTUDEV (1 Track)',
+        category: 'Servicios Estudio (Mezcla/Master)',
+        price_usd: 120.00,
+        sale_price_usd: 79.00,
+        description: 'Mezcla por stems + Master final listo para Spotify/Apple Music (-14 LUFS) con revisiones en Gtuprod.',
+        cover_image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=900&q=80',
+        product_type: 'service',
+        attached_file_id: '',
+        stock_status: 'in_stock',
+        created_at: '2026-11-08T15:00:00Z'
+      }
+    ];
+
     let UPLOADED_FILES = [];
+    let STORE_PRODUCTS = [];
     let UNLOCKED_FILE_IDS = new Set(JSON.parse(localStorage.getItem('gtublog_unlocked_files') || '[]'));
     let PAYMENT_TXS = JSON.parse(localStorage.getItem('gtublog_payment_txs') || '[]');
     let GTU_WALLET_BALANCE = parseFloat(localStorage.getItem('gtublog_wallet_balance') || '125.00');
     let CONNECTED_WEB3_ADDRESS = localStorage.getItem('gtublog_web3_address') || '';
     let ACTIVE_CHECKOUT_ITEM = null;
+
+    // IndexedDB binary storage so uploaded files persist across page reloads
+    function openGtublogFilesDb() {
+      return new Promise((resolve) => {
+        if (typeof indexedDB === 'undefined') return resolve(null);
+        const req = indexedDB.open('gtublog_files_idb', 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('blobs')) {
+            db.createObjectStore('blobs');
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function saveFileBlobToIdb(fileId, fileBlob) {
+      try {
+        const db = await openGtublogFilesDb();
+        if (!db) return;
+        await new Promise((resolve) => {
+          const tx = db.transaction('blobs', 'readwrite');
+          tx.objectStore('blobs').put(fileBlob, fileId);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      } catch (e) {}
+    }
+
+    async function getFileBlobFromIdb(fileId) {
+      try {
+        const db = await openGtublogFilesDb();
+        if (!db) return null;
+        return await new Promise((resolve) => {
+          const tx = db.transaction('blobs', 'readonly');
+          const req = tx.objectStore('blobs').get(fileId);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function downloadOrBuyFile(fileId) {
+      const f = UPLOADED_FILES.find(x => x.id === fileId);
+      if (!f) return;
+      const isUnlocked = !f.is_paid || f.price_usd <= 0 || UNLOCKED_FILE_IDS.has(f.id);
+      if (!isUnlocked) {
+        openCheckoutModal(f.id, f.file_name, Number(f.price_usd));
+        return;
+      }
+      let downloadHref = f.download_url || '';
+      const blob = await getFileBlobFromIdb(f.id);
+      if (blob && typeof URL !== 'undefined' && URL.createObjectURL) {
+        downloadHref = URL.createObjectURL(blob);
+      } else if (!downloadHref || downloadHref === '/posts.json') {
+        const fallbackBlob = new Blob(
+          [JSON.stringify({ resource: f.file_name, description: f.description, exported_from: 'WP-GTUBLOG Rust' }, null, 2)],
+          { type: f.mime_type || 'application/octet-stream' }
+        );
+        downloadHref = URL.createObjectURL(fallbackBlob);
+      }
+      const a = document.createElement('a');
+      a.href = downloadHref;
+      a.download = f.file_name || 'descarga-gtublog';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
 
     function formatBytes(bytes) {
       const b = Number(bytes || 0);
@@ -1054,8 +1589,11 @@
           dataUrl = URL.createObjectURL(file);
         }
 
+        const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+        await saveFileBlobToIdb(fileId, file);
+
         const item = {
-          id: 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          id: fileId,
           file_name: file.name,
           mime_type: file.type || 'application/octet-stream',
           size_bytes: file.size || 102400,
@@ -1114,13 +1652,14 @@
             <div class="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
               ${
                 isUnlocked
-                  ? `<a href="${f.download_url || '/posts.json'}" download="${f.file_name}" class="w-full text-center py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition">⬇ Descargar Archivo</a>`
+                  ? `<button type="button" onclick="downloadOrBuyFile('${f.id}')" class="w-full text-center py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition">⬇ Descargar Archivo (${f.file_name.slice(0, 24)})</button>`
                   : `<button type="button" onclick="openCheckoutModal('${f.id}', '${f.file_name.replace(/'/g, '')}', ${Number(f.price_usd)})" class="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs transition">💳 Comprar con Wallet / PayPal ($${Number(f.price_usd).toFixed(2)})</button>`
               }
             </div>
           </div>
         `;
       }).join('');
+      syncWpAdminCountersAndSelects();
     }
 
     function openCheckoutModal(itemId, itemTitle, amountUsd) {
@@ -1192,10 +1731,462 @@
       }
 
       UNLOCKED_FILE_IDS.add(ACTIVE_CHECKOUT_ITEM.id);
+      if (ACTIVE_CHECKOUT_ITEM.attached_file_id) {
+        UNLOCKED_FILE_IDS.add(ACTIVE_CHECKOUT_ITEM.attached_file_id);
+      }
       localStorage.setItem('gtublog_unlocked_files', JSON.stringify(Array.from(UNLOCKED_FILE_IDS)));
       recordLocalTransaction(txRecord);
       renderUploadedFiles();
+      renderStoreProducts();
       closeCheckoutModal();
+      if (ACTIVE_CHECKOUT_ITEM.attached_file_id) {
+        downloadOrBuyFile(ACTIVE_CHECKOUT_ITEM.attached_file_id);
+      }
+    }
+
+    // =========================================================================
+    // 🦀 WORDPRESS-RUST (wp-admin + Gutenberg + WooCommerce Store Engine)
+    // =========================================================================
+    async function loadStoreProducts() {
+      let serverProds = [];
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.products)) serverProds = data.products;
+        }
+      } catch (e) {}
+      const localProds = JSON.parse(localStorage.getItem('gtublog_store_products') || '[]');
+      const trashedIds = new Set((TRASH_ITEMS || []).map(t => t.id));
+      const combined = [...localProds, ...serverProds, ...DEFAULT_STORE_PRODUCTS].filter(p => !trashedIds.has(p.id));
+      const seen = new Set();
+      STORE_PRODUCTS = combined.filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+      renderStoreProducts();
+      syncWpAdminCountersAndSelects();
+    }
+
+    function renderStoreProducts() {
+      const grid = document.getElementById('store-products-grid');
+      if (grid) {
+        grid.innerHTML = STORE_PRODUCTS.map(prod => {
+          const hasSale = prod.sale_price_usd !== null && prod.sale_price_usd !== undefined && Number(prod.sale_price_usd) > 0 && Number(prod.sale_price_usd) < Number(prod.price_usd);
+          const effectivePrice = hasSale ? Number(prod.sale_price_usd) : Number(prod.price_usd);
+          const isUnlocked = UNLOCKED_FILE_IDS.has(prod.id) || (prod.attached_file_id && UNLOCKED_FILE_IDS.has(prod.attached_file_id));
+          const attachedFile = prod.attached_file_id ? UPLOADED_FILES.find(f => f.id === prod.attached_file_id) : null;
+
+          return `
+            <div class="post-card glass rounded-3xl overflow-hidden flex flex-col justify-between border border-pink-500/25 bg-black/70">
+              <div>
+                <div class="h-40 w-full overflow-hidden relative bg-zinc-900">
+                  <img src="${prod.cover_image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80'}" alt="${prod.title}" class="w-full h-full object-cover opacity-85 hover:scale-105 transition duration-500" />
+                  <span class="absolute top-2.5 left-2.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/80 text-pink-300 border border-pink-500/30">
+                    ${prod.category}
+                  </span>
+                  <div class="absolute bottom-2.5 right-2.5 px-3 py-1 rounded-full bg-black/90 border border-emerald-500/40 mono text-xs font-extrabold text-emerald-400">
+                    ${hasSale ? `<span class="line-through text-zinc-500 text-[10px] mr-1">$${Number(prod.price_usd).toFixed(2)}</span>` : ''}$${effectivePrice.toFixed(2)} USD
+                  </div>
+                </div>
+                <div class="p-4">
+                  <h3 class="text-sm font-extrabold text-white leading-snug mb-1.5">${prod.title}</h3>
+                  <p class="text-xs text-zinc-400 leading-relaxed line-clamp-3">${prod.description || ''}</p>
+                  ${attachedFile ? `<div class="mt-2.5 text-[10px] mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2 py-1 truncate">📦 Incluye descarga: ${attachedFile.file_name}</div>` : ''}
+                </div>
+              </div>
+              <div class="p-4 pt-2 border-t border-white/10 flex flex-col gap-2">
+                ${
+                  isUnlocked && prod.attached_file_id
+                    ? `<button type="button" onclick="downloadOrBuyFile('${prod.attached_file_id}')" class="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition">⬇ Descargar Producto Comprado</button>`
+                    : `<button type="button" onclick="buyStoreProduct('${prod.id}')" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-95 text-white font-extrabold text-xs transition shadow-lg">🛒 Comprar Ahora ($${effectivePrice.toFixed(2)})</button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      renderWpStoreAdminList();
+    }
+
+    function buyStoreProduct(prodId) {
+      const prod = STORE_PRODUCTS.find(p => p.id === prodId);
+      if (!prod) return;
+      const hasSale = prod.sale_price_usd !== null && prod.sale_price_usd !== undefined && Number(prod.sale_price_usd) > 0 && Number(prod.sale_price_usd) < Number(prod.price_usd);
+      const effectivePrice = hasSale ? Number(prod.sale_price_usd) : Number(prod.price_usd);
+      ACTIVE_CHECKOUT_ITEM = {
+        id: prod.id,
+        title: prod.title,
+        amount: effectivePrice,
+        attached_file_id: prod.attached_file_id || ''
+      };
+      document.getElementById('checkout-item-title').textContent = prod.title;
+      document.getElementById('checkout-item-amount').textContent = effectivePrice.toFixed(2);
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    }
+
+    async function createStoreProduct() {
+      const title = (document.getElementById('store-prod-title')?.value || '').trim();
+      const category = document.getElementById('store-prod-category')?.value || 'Stems & Sample Packs';
+      const priceUsd = Math.max(0, parseFloat(document.getElementById('store-prod-price')?.value || '19.99') || 19.99);
+      const saleRaw = document.getElementById('store-prod-sale-price')?.value || '';
+      const salePriceUsd = saleRaw !== '' ? Math.max(0, parseFloat(saleRaw) || 0) : null;
+      const productType = document.getElementById('store-prod-type')?.value || 'digital';
+      const attachedFileId = document.getElementById('store-prod-attached-file')?.value || '';
+      const description = (document.getElementById('store-prod-desc')?.value || '').trim() || 'Producto oficial en venta en la tienda de GTUBLOG.';
+      const coverImage = (document.getElementById('store-prod-cover')?.value || '').trim() || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80';
+
+      if (!title) {
+        alert('Escribe el nombre del producto o servicio que quieres poner en venta.');
+        return;
+      }
+
+      const prod = {
+        id: 'prod-' + Date.now(),
+        title,
+        category,
+        price_usd: priceUsd,
+        sale_price_usd: salePriceUsd,
+        description,
+        cover_image: coverImage,
+        product_type: productType,
+        attached_file_id: attachedFileId,
+        stock_status: 'in_stock',
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prod)
+        });
+      } catch (e) {}
+
+      const localProds = JSON.parse(localStorage.getItem('gtublog_store_products') || '[]');
+      localProds.unshift(prod);
+      localStorage.setItem('gtublog_store_products', JSON.stringify(localProds));
+
+      STORE_PRODUCTS.unshift(prod);
+      document.getElementById('store-prod-title').value = '';
+      document.getElementById('store-prod-desc').value = '';
+      renderStoreProducts();
+      syncWpAdminCountersAndSelects();
+      alert('✅ Producto publicado en venta en la Tienda de GTUBLOG.');
+    }
+
+    function deleteStoreProductToTrash(prodId) {
+      const idx = STORE_PRODUCTS.findIndex(p => p.id === prodId);
+      if (idx === -1) return;
+      const [prod] = STORE_PRODUCTS.splice(idx, 1);
+      const localProds = JSON.parse(localStorage.getItem('gtublog_store_products') || '[]').filter(p => p.id !== prodId);
+      localStorage.setItem('gtublog_store_products', JSON.stringify(localProds));
+      TRASH_ITEMS.unshift({
+        id: prod.id,
+        item_type: 'product',
+        title_or_email: prod.title,
+        trashed_at: new Date().toISOString(),
+        reason: 'Producto de tienda enviado a la papelera',
+        payload: prod
+      });
+      localStorage.setItem('gtublog_trash', JSON.stringify(TRASH_ITEMS));
+      renderStoreProducts();
+      renderTrash();
+      syncWpAdminCountersAndSelects();
+    }
+
+    function toggleWpAdminWorkspace(showAdmin, initialTab) {
+      const ws = document.getElementById('wp-admin-workspace');
+      if (!ws) return;
+      if (showAdmin) {
+        ws.classList.remove('hidden');
+        if (initialTab) switchWpTab(initialTab);
+        ws.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        ws.classList.add('hidden');
+      }
+      syncWpAdminCountersAndSelects();
+    }
+
+    function switchWpTab(tabName) {
+      const tabs = ['dashboard', 'posts', 'editor', 'media', 'store', 'trash'];
+      tabs.forEach(t => {
+        const panel = document.getElementById(`wptab-panel-${t}`);
+        const btn = document.getElementById(`wptab-btn-${t}`);
+        if (panel) panel.classList.toggle('hidden', t !== tabName);
+        if (btn) {
+          if (t === tabName) {
+            btn.classList.add('bg-[#2271b1]', 'text-white');
+          } else {
+            btn.classList.remove('bg-[#2271b1]', 'text-white');
+          }
+        }
+      });
+      syncWpAdminCountersAndSelects();
+    }
+
+    function openWpPostEditor(postId) {
+      toggleWpAdminWorkspace(true, 'editor');
+      const idEl = document.getElementById('wp-edit-post-id');
+      const titleEl = document.getElementById('wp-post-title');
+      const excerptEl = document.getElementById('wp-post-excerpt');
+      const contentEl = document.getElementById('wp-post-content');
+      const catEl = document.getElementById('wp-post-category');
+      const tagsEl = document.getElementById('wp-post-tags');
+      const coverEl = document.getElementById('wp-post-cover');
+      const fileEl = document.getElementById('wp-post-attached-file');
+      const prodEl = document.getElementById('wp-post-attached-product');
+      const heading = document.getElementById('wp-editor-heading');
+
+      if (!postId) {
+        idEl.value = '';
+        titleEl.value = '';
+        excerptEl.value = '';
+        contentEl.value = '';
+        coverEl.value = '';
+        if (fileEl) fileEl.value = '';
+        if (prodEl) prodEl.value = '';
+        if (heading) heading.textContent = '✍️ Añadir Nueva Entrada (Editor WordPress-Rust)';
+        titleEl.focus();
+        return;
+      }
+
+      const post = ALL_POSTS.find(p => p.id === postId);
+      if (!post) return;
+      idEl.value = post.id;
+      titleEl.value = post.title || '';
+      excerptEl.value = post.excerpt || post.summary || '';
+      contentEl.value = post.content || '';
+      if (catEl && post.category) catEl.value = post.category;
+      if (tagsEl) tagsEl.value = (post.tags || []).join(', ');
+      if (coverEl) coverEl.value = post.cover_image || '';
+      if (fileEl) fileEl.value = post.attached_file_id || '';
+      if (prodEl) prodEl.value = post.attached_product_id || '';
+      if (heading) heading.textContent = `✏️ Editando Entrada: ${post.title}`;
+    }
+
+    function insertEditorSyntax(prefix, suffix) {
+      const ta = document.getElementById('wp-post-content');
+      if (!ta) return;
+      const start = ta.selectionStart || 0;
+      const end = ta.selectionEnd || 0;
+      const selected = ta.value.slice(start, end) || 'texto';
+      ta.value = ta.value.slice(0, start) + prefix + selected + suffix + ta.value.slice(end);
+      ta.focus();
+    }
+
+    function insertSelectedFileIntoArticle() {
+      const sel = document.getElementById('wp-insert-file-select');
+      const fileId = sel?.value;
+      if (!fileId) return;
+      const f = UPLOADED_FILES.find(x => x.id === fileId);
+      if (!f) return;
+      const attachedSel = document.getElementById('wp-post-attached-file');
+      if (attachedSel) attachedSel.value = f.id;
+      const ta = document.getElementById('wp-post-content');
+      if (ta) {
+        ta.value += `\n\n### 📁 Descarga Adjunta: **${f.file_name}**\n${f.description || 'Archivo disponible para descarga directa al pie del artículo.'}\n`;
+      }
+    }
+
+    function insertSelectedProductIntoArticle() {
+      const sel = document.getElementById('wp-insert-product-select');
+      const prodId = sel?.value;
+      if (!prodId) return;
+      const pr = STORE_PRODUCTS.find(x => x.id === prodId);
+      if (!pr) return;
+      const attachedSel = document.getElementById('wp-post-attached-product');
+      if (attachedSel) attachedSel.value = pr.id;
+      const ta = document.getElementById('wp-post-content');
+      if (ta) {
+        const effPrice = pr.sale_price_usd ? Number(pr.sale_price_usd) : Number(pr.price_usd);
+        ta.value += `\n\n### 🛒 En Venta: **${pr.title}** ($${effPrice.toFixed(2)} USD)\n${pr.description || ''}\n`;
+      }
+    }
+
+    function handleWpCoverUpload(event, targetInputId) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const el = document.getElementById(targetInputId);
+        if (el && typeof reader.result === 'string') {
+          el.value = reader.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function generateWpEditorWithAI() {
+      const topic = (document.getElementById('wp-post-title')?.value || '').trim() || 'Producción Musical, Stems Descargables y Arquitectura Rust';
+      const category = document.getElementById('wp-post-category')?.value || 'Producción & Mastering';
+      document.getElementById('wp-post-title').value = topic;
+      document.getElementById('wp-post-excerpt').value = `Guía completa y recursos descargables sobre ${topic} en GTUBLOG.`;
+      document.getElementById('wp-post-content').value = `## ${topic}\n\nBienvenido a esta entrada publicada desde el editor **WordPress-Rust** de **GTUBLOG**.\n\n### Recursos y Descargas Incluidas\n- Puedes descargar los archivos adjuntos (WAV, ZIP, PDF, Presets) directamente desde este artículo.\n- También puedes adquirir licencias y paquetes completos en nuestra **Tienda WooCommerce-Rust**.`;
+    }
+
+    async function saveWpArticle() {
+      const editId = (document.getElementById('wp-edit-post-id')?.value || '').trim();
+      const title = (document.getElementById('wp-post-title')?.value || '').trim();
+      const excerpt = (document.getElementById('wp-post-excerpt')?.value || '').trim();
+      const content = (document.getElementById('wp-post-content')?.value || '').trim();
+      const category = document.getElementById('wp-post-category')?.value || 'Producción & Mastering';
+      const tagsRaw = (document.getElementById('wp-post-tags')?.value || 'gtudev, rust, musica').split(',').map(t => t.trim()).filter(Boolean);
+      const coverImage = (document.getElementById('wp-post-cover')?.value || '').trim() || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1200&q=80';
+      const attachedFileId = document.getElementById('wp-post-attached-file')?.value || '';
+      const attachedProductId = document.getElementById('wp-post-attached-product')?.value || '';
+
+      if (!title || !content) {
+        alert('Por favor completa el título y el contenido del artículo.');
+        return;
+      }
+
+      const postObj = {
+        id: editId || ('post-' + Date.now()),
+        slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        title,
+        category,
+        excerpt: excerpt || content.slice(0, 140) + '...',
+        content,
+        author: 'Gtunene · GTUDEV',
+        read_time_minutes: Math.max(2, Math.ceil(content.split(/\s+/).length / 180)),
+        published_at: new Date().toISOString(),
+        featured_on_gtudev: true,
+        tags: tagsRaw.length ? tagsRaw : ['gtudev', 'rust'],
+        cover_image: coverImage,
+        attached_file_id: attachedFileId,
+        attached_product_id: attachedProductId
+      };
+
+      try {
+        await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(postObj)
+        });
+      } catch (e) {}
+
+      const custom = JSON.parse(localStorage.getItem('gtublog_custom_posts') || '[]').filter(p => p.id !== postObj.id);
+      custom.unshift(postObj);
+      localStorage.setItem('gtublog_custom_posts', JSON.stringify(custom));
+
+      const existingIdx = ALL_POSTS.findIndex(p => p.id === postObj.id);
+      if (existingIdx >= 0) {
+        ALL_POSTS[existingIdx] = postObj;
+      } else {
+        ALL_POSTS.unshift(postObj);
+      }
+
+      document.getElementById('active-posts-count').textContent = ALL_POSTS.length;
+      renderPosts();
+      syncWpAdminCountersAndSelects();
+      alert('✅ Artículo guardado y publicado en WordPress-Rust (GTUBLOG).');
+      switchWpTab('posts');
+    }
+
+    function renderWpPostsTable() {
+      const container = document.getElementById('wp-posts-table-list');
+      if (!container) return;
+      container.innerHTML = ALL_POSTS.map(post => `
+        <div class="p-3.5 rounded-2xl bg-[#1d2327] border border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300">${post.category}</span>
+              <strong class="text-sm text-white">${post.title}</strong>
+            </div>
+            <div class="text-[11px] text-zinc-400 mt-1">
+              Publicado: ${(post.published_at || '').slice(0, 10)} · Autor: ${post.author || 'Gtunene'}
+              ${post.attached_file_id ? ' · <span class="text-emerald-300">📁 Con descarga adjunta</span>' : ''}
+              ${post.attached_product_id ? ' · <span class="text-pink-300">🛒 Con producto en venta</span>' : ''}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="openReaderModal('${post.id}')" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold">👁 Ver</button>
+            <button type="button" onclick="openWpPostEditor('${post.id}')" class="px-3 py-1.5 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-bold">✏️ Editar</button>
+            <button type="button" onclick="movePostToTrash('${post.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-semibold">🗑️ Papelera</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderWpMediaLibrary() {
+      const container = document.getElementById('wp-media-library-list');
+      if (!container) return;
+      container.innerHTML = UPLOADED_FILES.map(f => `
+        <div class="p-4 rounded-2xl bg-[#1d2327] border border-white/10 flex items-center justify-between gap-3">
+          <div>
+            <div class="text-xs font-bold text-white break-all">${f.file_name}</div>
+            <div class="text-[11px] text-zinc-400">${f.category} · ${formatBytes(f.size_bytes)} · ${f.price_usd > 0 ? '$' + Number(f.price_usd).toFixed(2) + ' USD' : 'Descarga Gratis'}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="downloadOrBuyFile('${f.id}')" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs">⬇ Probar Descarga</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderWpStoreAdminList() {
+      const container = document.getElementById('wp-store-admin-list');
+      if (!container) return;
+      container.innerHTML = STORE_PRODUCTS.map(pr => {
+        const effPrice = pr.sale_price_usd ? Number(pr.sale_price_usd) : Number(pr.price_usd);
+        return `
+          <div class="p-4 rounded-2xl bg-[#1d2327] border border-pink-500/25 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-extrabold text-white">${pr.title}</div>
+              <div class="text-[11px] text-zinc-400">${pr.category} · <span class="text-emerald-400 font-bold mono">$${effPrice.toFixed(2)} USD</span></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="buyStoreProduct('${pr.id}')" class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 font-bold text-xs">🛒 Ver Checkout</button>
+              <button type="button" onclick="deleteStoreProductToTrash('${pr.id}')" class="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function syncWpAdminCountersAndSelects() {
+      const setTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(val);
+      };
+      setTxt('wpbar-products-count', STORE_PRODUCTS.length);
+      setTxt('wpbar-files-count', UPLOADED_FILES.length);
+      setTxt('wp-sidebar-posts-count', ALL_POSTS.length);
+      setTxt('wp-sidebar-files-count', UPLOADED_FILES.length);
+      setTxt('wp-sidebar-products-count', STORE_PRODUCTS.length);
+      setTxt('wp-sidebar-trash-count', TRASH_ITEMS.length);
+      setTxt('wp-stat-posts', ALL_POSTS.length);
+      setTxt('wp-stat-files', UPLOADED_FILES.length);
+      setTxt('wp-stat-products', STORE_PRODUCTS.length);
+
+      const fileOpts = `<option value="">-- Ningún archivo adjunto --</option>` + UPLOADED_FILES.map(f => `<option value="${f.id}">${f.file_name} (${f.price_usd > 0 ? '$' + Number(f.price_usd).toFixed(2) : 'Gratis'})</option>`).join('');
+      ['wp-insert-file-select', 'wp-post-attached-file', 'store-prod-attached-file'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const prev = el.value;
+          el.innerHTML = fileOpts;
+          if (prev) el.value = prev;
+        }
+      });
+
+      const prodOpts = `<option value="">-- Ningún producto en venta --</option>` + STORE_PRODUCTS.map(p => `<option value="${p.id}">${p.title} ($${Number(p.sale_price_usd || p.price_usd).toFixed(2)})</option>`).join('');
+      ['wp-insert-product-select', 'wp-post-attached-product'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const prev = el.value;
+          el.innerHTML = prodOpts;
+          if (prev) el.value = prev;
+        }
+      });
+
+      renderWpPostsTable();
+      renderWpMediaLibrary();
+      renderWpStoreAdminList();
+      const wpTrashEl = document.getElementById('wp-trash-admin-list');
+      const mainTrashEl = document.getElementById('blog-trash-list');
+      if (wpTrashEl && mainTrashEl) wpTrashEl.innerHTML = mainTrashEl.innerHTML;
     }
 
     function renderPaymentTransactions() {
@@ -1224,6 +2215,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadBlogData();
       loadFilesAndPayments();
+      loadStoreProducts();
     });
   </script>
   <script src="/gtudev-ecosystem.js" defer></script>

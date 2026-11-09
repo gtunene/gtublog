@@ -123,6 +123,21 @@ pub struct PaymentTransaction {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoreProduct {
+    pub id: String,
+    pub title: String,
+    pub category: String,
+    pub price_usd: f64,
+    pub sale_price_usd: Option<f64>,
+    pub description: String,
+    pub cover_image: String,
+    pub product_type: String, // "digital" | "service" | "license"
+    pub attached_file_id: Option<String>,
+    pub stock_status: String,
+    pub created_at: String,
+}
+
 #[derive(Debug, Default)]
 pub struct AppStore {
     pub posts: Vec<BlogPost>,
@@ -130,6 +145,7 @@ pub struct AppStore {
     pub users: Vec<BlogUser>,
     pub usage: ApiUsageState,
     pub files: Vec<UploadedResourceFile>,
+    pub products: Vec<StoreProduct>,
     pub transactions: Vec<PaymentTransaction>,
 }
 
@@ -261,6 +277,34 @@ pub fn build_shared_state(posts_path: PathBuf) -> SharedState {
             download_url: Some("/posts.json".to_string()),
         },
     ];
+    let initial_products = vec![
+        StoreProduct {
+            id: "prod-sabadete-master-stems".to_string(),
+            title: "Sabadete (Master Stems 24-Bit WAV + Proyecto Mezcla)".to_string(),
+            category: "Stems & Sample Packs".to_string(),
+            price_usd: 29.99,
+            sale_price_usd: Some(14.99),
+            description: "Paquete completo de Stems multipista 24-bit WAV + Cadena de Mastering Oficial LUFS.".to_string(),
+            cover_image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80".to_string(),
+            product_type: "digital".to_string(),
+            attached_file_id: Some("file-sabadete-stems-pack".to_string()),
+            stock_status: "in_stock".to_string(),
+            created_at: "2026-11-08T10:00:00Z".to_string(),
+        },
+        StoreProduct {
+            id: "prod-rust-cloud-run-starter".to_string(),
+            title: "Plantilla WordPress-Rust Axum Zero Cold Start + PayPal Business".to_string(),
+            category: "Software & Plantillas Rust/IA".to_string(),
+            price_usd: 39.00,
+            sale_price_usd: Some(19.99),
+            description: "Código fuente completo en Rust (Axum 0.7) + Docker Alpine + CMS estilo WordPress + Pasarela Wallet/PayPal.".to_string(),
+            cover_image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=80".to_string(),
+            product_type: "digital".to_string(),
+            attached_file_id: Some("file-rust-cloud-run-blueprint".to_string()),
+            stock_status: "in_stock".to_string(),
+            created_at: "2026-11-08T12:00:00Z".to_string(),
+        },
+    ];
     SharedState {
         store: Arc::new(RwLock::new(AppStore {
             posts: initial_posts,
@@ -268,6 +312,7 @@ pub fn build_shared_state(posts_path: PathBuf) -> SharedState {
             users: initial_users,
             usage: ApiUsageState::default(),
             files: initial_files,
+            products: initial_products,
             transactions: Vec::new(),
         })),
         boot_instant: Instant::now(),
@@ -1059,6 +1104,50 @@ async fn list_payments_handler(State(state): State<SharedState>) -> impl IntoRes
     }))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CreateProductInput {
+    pub id: Option<String>,
+    pub title: String,
+    pub category: Option<String>,
+    pub price_usd: Option<f64>,
+    pub sale_price_usd: Option<f64>,
+    pub description: Option<String>,
+    pub cover_image: Option<String>,
+    pub product_type: Option<String>,
+    pub attached_file_id: Option<String>,
+}
+
+async fn list_products_handler(State(state): State<SharedState>) -> impl IntoResponse {
+    let store = state.store.read().unwrap();
+    Json(json!({
+        "ok": true,
+        "count": store.products.len(),
+        "products": store.products
+    }))
+}
+
+async fn create_product_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<CreateProductInput>,
+) -> impl IntoResponse {
+    let prod = StoreProduct {
+        id: payload.id.unwrap_or_else(|| format!("prod-{}", Uuid::new_v4().simple())),
+        title: payload.title,
+        category: payload.category.unwrap_or_else(|| "Stems & Sample Packs".to_string()),
+        price_usd: payload.price_usd.unwrap_or(14.99).max(0.0),
+        sale_price_usd: payload.sale_price_usd,
+        description: payload.description.unwrap_or_default(),
+        cover_image: payload.cover_image.unwrap_or_else(|| "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80".to_string()),
+        product_type: payload.product_type.unwrap_or_else(|| "digital".to_string()),
+        attached_file_id: payload.attached_file_id,
+        stock_status: "in_stock".to_string(),
+        created_at: Utc::now().to_rfc3339(),
+    };
+    let mut store = state.store.write().unwrap();
+    store.products.insert(0, prod.clone());
+    (StatusCode::CREATED, Json(json!({ "ok": true, "product": prod })))
+}
+
 pub fn create_router(state: SharedState, public_dir: PathBuf) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -1079,6 +1168,7 @@ pub fn create_router(state: SharedState, public_dir: PathBuf) -> Router {
         .route("/api/chat", post(chat_handler))
         .route("/api/ai/generate-post", post(ai_generate_post_handler))
         .route("/api/files", get(list_files_handler).post(upload_file_handler))
+        .route("/api/products", get(list_products_handler).post(create_product_handler))
         .route("/api/payments/checkout", post(payment_checkout_handler))
         .route("/api/payments/history", get(list_payments_handler))
         .fallback_service(ServeDir::new(public_dir).append_index_html_on_directories(true))

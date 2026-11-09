@@ -19,6 +19,37 @@ export function createGtublogServer() {
   const state = {
     posts: structuredClone(initialPosts),
     trash: [],
+    files: [
+      {
+        id: 'file-sabadete-stems-pack',
+        file_name: 'Gtunene_Sabadete_Master_Stems_24bit.zip',
+        mime_type: 'application/zip',
+        size_bytes: 48500000,
+        category: 'Producción & Mastering',
+        description: 'Paquete oficial de Stems 24-bit WAV + Cadena de Mastering LUFS (-14 LUFS Streaming)',
+        price_usd: 14.99,
+        is_paid: true,
+        uploaded_by: 'info@dev.gtunene.com',
+        uploaded_at: '2026-11-08T10:00:00Z',
+        download_url: '/posts.json'
+      }
+    ],
+    products: [
+      {
+        id: 'prod-sabadete-master-stems',
+        title: 'Sabadete (Master Stems 24-Bit WAV + Proyecto Mezcla)',
+        category: 'Stems & Sample Packs',
+        price_usd: 29.99,
+        sale_price_usd: 14.99,
+        description: 'Paquete completo de Stems multipista 24-bit WAV + Cadena de Mastering Oficial LUFS.',
+        cover_image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80',
+        product_type: 'digital',
+        attached_file_id: 'file-sabadete-stems-pack',
+        stock_status: 'in_stock',
+        created_at: '2026-11-08T10:00:00Z'
+      }
+    ],
+    transactions: [],
     users: [
       { email: 'gerarditomusic@gmail.com', name: 'Gerardo (SuperAdmin)', role: 'admin', status: 'active' },
       { email: 'info@dev.gtunene.com', name: 'GTUDEV Admin', role: 'admin', status: 'active' },
@@ -229,6 +260,70 @@ export function createGtublogServer() {
         excerpt: `Análisis sobre ${topic} integrado con la arquitectura sin cold start de GTUBLOG y la suite musical GTUDEV.`,
         content: `## ${topic}\n\nEste artículo técnico explora cómo **GTUDEV** aborda **${topic}** combinando microservicios ultraligeros en **Rust (Axum)** sobre Cloud Run y modelos **Gemini 2.5 Flash**.`
       });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/files') {
+      return sendJson(res, 200, { ok: true, count: state.files.length, files: state.files });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/files') {
+      const body = await readBody(req);
+      const fileItem = {
+        id: body.id || `file-${Date.now()}`,
+        file_name: body.file_name || 'archivo.zip',
+        mime_type: body.mime_type || 'application/octet-stream',
+        size_bytes: Number(body.size_bytes || 102400),
+        category: body.category || 'Producción & Mastering',
+        description: body.description || '',
+        price_usd: Number(body.price_usd || 0),
+        is_paid: Number(body.price_usd || 0) > 0,
+        uploaded_by: body.uploaded_by || 'info@dev.gtunene.com',
+        uploaded_at: new Date().toISOString(),
+        download_url: body.download_url || '/posts.json'
+      };
+      state.files.unshift(fileItem);
+      return sendJson(res, 201, { ok: true, file: fileItem });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/products') {
+      return sendJson(res, 200, { ok: true, count: state.products.length, products: state.products });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/products') {
+      const body = await readBody(req);
+      const prod = {
+        id: body.id || `prod-${Date.now()}`,
+        title: (body.title || '').trim() || 'Nuevo Producto GTUBLOG',
+        category: body.category || 'Stems & Sample Packs',
+        price_usd: Number(body.price_usd || 14.99),
+        sale_price_usd: body.sale_price_usd !== undefined ? Number(body.sale_price_usd) : null,
+        description: body.description || '',
+        cover_image: body.cover_image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80',
+        product_type: body.product_type || 'digital',
+        attached_file_id: body.attached_file_id || null,
+        stock_status: 'in_stock',
+        created_at: new Date().toISOString()
+      };
+      state.products.unshift(prod);
+      return sendJson(res, 201, { ok: true, product: prod });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/payments/checkout') {
+      const body = await readBody(req);
+      const tx = {
+        id: `tx-${Date.now()}`,
+        item_id: body.item_id || 'item',
+        item_title: body.item_title || 'Producto GTUBLOG',
+        method: body.method || 'paypal_business',
+        currency: body.currency || 'USD',
+        amount: Number(body.amount || 0),
+        payer_identifier: body.payer_identifier || 'info@dev.gtunene.com',
+        merchant_account: 'PayPal Business (info@dev.gtunene.com)',
+        status: 'completed',
+        created_at: new Date().toISOString()
+      };
+      state.transactions.unshift(tx);
+      return sendJson(res, 200, { ok: true, transaction: tx, unlocked: true });
     }
 
     // Serve static files from public/
