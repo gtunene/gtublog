@@ -94,12 +94,43 @@ impl Default for ApiUsageState {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UploadedResourceFile {
+    pub id: String,
+    pub file_name: String,
+    pub mime_type: String,
+    pub size_bytes: u64,
+    pub category: String,
+    pub description: String,
+    pub price_usd: f64,
+    pub is_paid: bool,
+    pub uploaded_by: String,
+    pub uploaded_at: String,
+    pub download_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentTransaction {
+    pub id: String,
+    pub item_id: String,
+    pub item_title: String,
+    pub method: String, // "wallet_web3" | "wallet_gtu" | "paypal_business"
+    pub currency: String,
+    pub amount: f64,
+    pub payer_identifier: String,
+    pub merchant_account: String,
+    pub status: String,
+    pub created_at: String,
+}
+
 #[derive(Debug, Default)]
 pub struct AppStore {
     pub posts: Vec<BlogPost>,
     pub trash: Vec<TrashEntry>,
     pub users: Vec<BlogUser>,
     pub usage: ApiUsageState,
+    pub files: Vec<UploadedResourceFile>,
+    pub transactions: Vec<PaymentTransaction>,
 }
 
 #[derive(Clone)]
@@ -202,12 +233,42 @@ pub fn build_shared_state(posts_path: PathBuf) -> SharedState {
             created_at: "2026-01-01T00:00:00Z".to_string(),
         },
     ];
+    let initial_files = vec![
+        UploadedResourceFile {
+            id: "file-sabadete-stems-pack".to_string(),
+            file_name: "Gtunene_Sabadete_Master_Stems_24bit.zip".to_string(),
+            mime_type: "application/zip".to_string(),
+            size_bytes: 48_500_000,
+            category: "Producción & Mastering".to_string(),
+            description: "Paquete oficial de Stems 24-bit WAV + Cadena de Mastering LUFS (-14 LUFS Streaming)".to_string(),
+            price_usd: 14.99,
+            is_paid: true,
+            uploaded_by: "info@dev.gtunene.com".to_string(),
+            uploaded_at: "2026-11-08T10:00:00Z".to_string(),
+            download_url: Some("/posts.json".to_string()),
+        },
+        UploadedResourceFile {
+            id: "file-vocal-score-dsp-preset".to_string(),
+            file_name: "Vocal_Score_Studio_5Stage_Calibration.json".to_string(),
+            mime_type: "application/json".to_string(),
+            size_bytes: 128_400,
+            category: "IA & Audio".to_string(),
+            description: "Preset de calibración vocal en 5 etapas (YIN F0 + Rectificación Armónica MIDI/MusicXML)".to_string(),
+            price_usd: 0.0,
+            is_paid: false,
+            uploaded_by: "gerarditomusic@gmail.com".to_string(),
+            uploaded_at: "2026-11-08T11:30:00Z".to_string(),
+            download_url: Some("/posts.json".to_string()),
+        },
+    ];
     SharedState {
         store: Arc::new(RwLock::new(AppStore {
             posts: initial_posts,
             trash: Vec::new(),
             users: initial_users,
             usage: ApiUsageState::default(),
+            files: initial_files,
+            transactions: Vec::new(),
         })),
         boot_instant: Instant::now(),
         posts_file_path: posts_path,
@@ -893,6 +954,111 @@ async fn ai_generate_post_handler(
     )
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UploadFilePayload {
+    pub file_name: String,
+    pub mime_type: Option<String>,
+    pub size_bytes: Option<u64>,
+    pub category: Option<String>,
+    pub description: Option<String>,
+    pub price_usd: Option<f64>,
+    pub download_url: Option<String>,
+}
+
+async fn list_files_handler(State(state): State<SharedState>) -> impl IntoResponse {
+    let store = state.store.read().unwrap();
+    Json(json!({
+        "ok": true,
+        "count": store.files.len(),
+        "files": store.files
+    }))
+}
+
+async fn upload_file_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<UploadFilePayload>,
+) -> impl IntoResponse {
+    let price = payload.price_usd.unwrap_or(0.0).max(0.0);
+    let item = UploadedResourceFile {
+        id: format!("file-{}", Uuid::new_v4().simple()),
+        file_name: payload.file_name.trim().to_string(),
+        mime_type: payload.mime_type.unwrap_or_else(|| "application/octet-stream".to_string()),
+        size_bytes: payload.size_bytes.unwrap_or(0),
+        category: payload.category.unwrap_or_else(|| "Recursos & Archivos".to_string()),
+        description: payload.description.unwrap_or_else(|| "Archivo subido a GTUBLOG Vault".to_string()),
+        price_usd: price,
+        is_paid: price > 0.0,
+        uploaded_by: "info@dev.gtunene.com".to_string(),
+        uploaded_at: Utc::now().to_rfc3339(),
+        download_url: payload.download_url,
+    };
+    let mut store = state.store.write().unwrap();
+    store.files.insert(0, item.clone());
+    (
+        StatusCode::CREATED,
+        Json(json!({
+            "ok": true,
+            "file": item
+        })),
+    )
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CheckoutPayload {
+    pub item_id: String,
+    pub item_title: String,
+    pub method: String, // "wallet_web3" | "wallet_gtu" | "paypal_business"
+    pub currency: Option<String>,
+    pub amount: f64,
+    pub payer_identifier: Option<String>,
+}
+
+async fn payment_checkout_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<CheckoutPayload>,
+) -> impl IntoResponse {
+    let method = payload.method.trim().to_lowercase();
+    let merchant = if method == "paypal_business" {
+        "PayPal Business (info@dev.gtunene.com)"
+    } else if method == "wallet_web3" {
+        "GTU Web3 Multi-Chain Wallet (USDT/USDC/ETH/SOL)"
+    } else {
+        "GTU Suite Digital Wallet"
+    };
+    let tx = PaymentTransaction {
+        id: format!("tx-{}", Uuid::new_v4().simple()),
+        item_id: payload.item_id,
+        item_title: payload.item_title,
+        method,
+        currency: payload.currency.unwrap_or_else(|| "USD".to_string()),
+        amount: payload.amount.max(0.0),
+        payer_identifier: payload.payer_identifier.unwrap_or_else(|| "gerarditomusic@gmail.com".to_string()),
+        merchant_account: merchant.to_string(),
+        status: "completed".to_string(),
+        created_at: Utc::now().to_rfc3339(),
+    };
+    let mut store = state.store.write().unwrap();
+    store.transactions.insert(0, tx.clone());
+    (
+        StatusCode::OK,
+        Json(json!({
+            "ok": true,
+            "transaction": tx,
+            "unlocked": true
+        })),
+    )
+}
+
+async fn list_payments_handler(State(state): State<SharedState>) -> impl IntoResponse {
+    let store = state.store.read().unwrap();
+    Json(json!({
+        "ok": true,
+        "merchant_paypal_business": "info@dev.gtunene.com",
+        "wallet_supported": ["USDT", "USDC", "ETH", "SOL", "GTU_WALLET_USD"],
+        "transactions": store.transactions
+    }))
+}
+
 pub fn create_router(state: SharedState, public_dir: PathBuf) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -912,6 +1078,9 @@ pub fn create_router(state: SharedState, public_dir: PathBuf) -> Router {
         .route("/api/mode", post(set_mode_handler))
         .route("/api/chat", post(chat_handler))
         .route("/api/ai/generate-post", post(ai_generate_post_handler))
+        .route("/api/files", get(list_files_handler).post(upload_file_handler))
+        .route("/api/payments/checkout", post(payment_checkout_handler))
+        .route("/api/payments/history", get(list_payments_handler))
         .fallback_service(ServeDir::new(public_dir).append_index_html_on_directories(true))
         .layer(cors)
         .with_state(state)

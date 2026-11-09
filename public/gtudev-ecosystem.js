@@ -21,41 +21,45 @@
   const GEMINI_KEY = ['AIzaSyDY2A8qkpiSfU', '0VCy7_y99j5YnZH5c88OY'].join('');
   const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
 
+  const CLOUD_RUN_BACKENDS = {
+    promo: 'https://gtudev-promo-agent-291498173768.europe-west1.run.app',
+    smm: 'https://gtudev-smm-agent-291498173768.europe-west1.run.app',
+    vocal: 'https://vocal-score-studio-291498173768.europe-west1.run.app',
+    creator: 'https://ai-creative-assistant-291498173768.europe-west1.run.app',
+    gtublog: 'https://gtublog-291498173768.europe-west1.run.app'
+  };
+
   function detectAppContext() {
     const host = (window.location.hostname || '').toLowerCase();
     const title = (document.title || '').toLowerCase();
-    if (host.includes('promoagent') || title.includes('promo')) {
+    if (host.includes('promoagent') || host.includes('gtupromo') || host.includes('gtudev-promo-agent') || title.includes('promo')) {
       return {
         id: 'promo',
-        name: 'promoagent',
-        color: '#10b981',
+        name: 'Promo Agent',
         tagline: 'Curaduría y pitching inteligente para lanzamientos musicales.',
         features: 'Análisis acústico, pitching editorial a curadores de Spotify y salas de escucha privadas.'
       };
     }
-    if (host.includes('smmgtuagent') || title.includes('smm')) {
+    if (host.includes('smmgtuagent') || host.includes('gtusocial') || host.includes('gtusmmstudio') || host.includes('gtudev-smm-agent') || title.includes('smm')) {
       return {
         id: 'smm',
-        name: 'smmgtuagent',
-        color: '#0ea5e9',
+        name: 'SMM Autonomous',
         tagline: 'Crecimiento orgánico y gestión multicanal para artistas.',
-        features: 'Sincronización con Instagram, TikTok, YouTube, Facebook y Threads, curva armónica y catálogo Peakerr.'
+        features: 'Sincronización con Instagram, TikTok, YouTube, Facebook y Threads, curva armónica y auditoría de audiencia.'
       };
     }
-    if (host.includes('musicscore') || title.includes('vocal') || title.includes('score')) {
+    if (host.includes('musicscore') || host.includes('gtuscore') || host.includes('vocal-score-studio') || title.includes('vocal') || title.includes('score')) {
       return {
         id: 'vocal',
-        name: 'musicscore',
-        color: '#f59e0b',
+        name: 'Vocal Score Studio',
         tagline: 'Separación de stems y transcripción vocal de precisión.',
         features: 'Aislamiento vocal, transcripción automática a MusicXML y partituras PDF listas para estudio.'
       };
     }
-    if (host.includes('aigtucreator') || title.includes('creative') || title.includes('creator')) {
+    if (host.includes('aigtucreator') || host.includes('gtucreator') || host.includes('ai-creative-assistant') || title.includes('creative') || title.includes('creator')) {
       return {
         id: 'creator',
-        name: 'aigtucreator',
-        color: '#d946ef',
+        name: 'AI Gtu Creator',
         tagline: 'Dirección visual, storyboards y videoclips a partir de tus letras.',
         features: 'Consistencia de personaje, análisis de canciones y galería sincronizada en Google Cloud Storage.'
       };
@@ -63,31 +67,43 @@
     if (host.includes('gtuprod') || title.includes('gtuprod')) {
       return {
         id: 'gtuprod',
-        name: 'gtuprod',
-        color: '#f43f5e',
-        tagline: 'Ingeniería acústica, telemetría LUFS, mastering y reproductor multi-playlist.',
-        features: 'Medición de sonoridad en tiempo real, cadena DSP vocal, playlists continuas (Demos, Canciones Terminadas, Por Publicar y Para Publicar) y diagnóstico técnico.'
+        name: 'Gtuprod',
+        tagline: 'Ingeniería acústica, telemetría LUFS y mastering asistido.',
+        features: 'Medición de sonoridad en tiempo real, cadena DSP vocal y diagnóstico técnico para streaming.'
       };
     }
-    if (host.includes('gtublog') || title.includes('gtublog')) {
+    if (host.includes('gtublog') || title.includes('gtublog') || title.includes('blog')) {
       return {
         id: 'gtublog',
-        name: 'gtublog',
-        color: '#a855f7',
-        tagline: 'Blog editorial de ingeniería IA, música y arquitectura Rust Zero Cold Start.',
-        features: 'Backend ultraligero en Rust (Axum + Alpine Docker) en Cloud Run, artículos técnicos sincronizados con gtudev, redacción con Gemini 2.5 y Basurero CMS.'
+        name: 'GTUBLOG',
+        tagline: 'Bitácora técnica de ingeniería musical, IA y arquitectura Cloud.',
+        features: 'Artículos de ingeniería en Rust, DSP de audio, Cloud Run y flujos creativos con IA.'
       };
     }
     return {
       id: 'hub',
-      name: 'gtudev',
-      color: '#00f2fe',
+      name: 'GTUDEV',
       tagline: 'Suite creativa e inteligencia artificial para la música.',
-      features: 'Siete herramientas diseñadas para potenciar la producción, el blog editorial, el arte visual y el lanzamiento de música.'
+      features: 'Cinco herramientas diseñadas para potenciar la producción, el arte visual y el lanzamiento de música.'
     };
   }
 
   const APP_CTX = detectAppContext();
+
+  // Transparent Cloud Run API routing when hosted on clean *-suite.web.app sites
+  try {
+    const currentHost = (window.location.hostname || '').toLowerCase();
+    const backendOrigin = CLOUD_RUN_BACKENDS[APP_CTX.id];
+    if (backendOrigin && currentHost.endsWith('.web.app') && typeof window.fetch === 'function') {
+      const origFetch = window.fetch.bind(window);
+      window.fetch = function (input, init) {
+        if (typeof input === 'string' && (input.startsWith('/api/') || input.startsWith('/v1/') || input === '/healthz')) {
+          return origFetch(backendOrigin + input, init);
+        }
+        return origFetch(input, init);
+      };
+    }
+  } catch (e) {}
 
   const STATE = {
     config: {
@@ -131,9 +147,26 @@
     if (q.includes('precio') || q.includes('costo') || q.includes('planes')) {
       return `Durante la fase de desarrollo privado estamos trabajando con artistas invitados. Si te unes a la **Waiting List**, recibirás acceso prioritario de lanzamiento.`;
     }
-    if (q.includes('basurero') || q.includes('papelera') || q.includes('trash') || q.includes('eliminado')) {
+    if (q.includes('algoritmo') || q.includes('detec') || q.includes('rectific') || q.includes('pyin') || q.includes('viterbi') || q.includes('demucs') || q.includes('whisper')) {
+      return `🧬 **Algoritmos Activos en Vocal Score Studio**:\n• **Separación Vocal**: Meta Demucs v4 (htdemucs) + filtro armónico 80–1150 Hz.\n• **Detección Pitch (F0)**: pYIN probabilístico con decodificación Viterbi y validación de energía armónica (H1+H2+H3 vs f0/2).\n• **Rectificación en 5 Etapas (score_trainer.py)**: Supresión de saltos de octava (±12 st), discriminación vibrato vs. melisma, ajuste diatónico Krumhansl-Schmuckler + Camelot, cuantización rítmica DP (1/16) y alineación sílaba-a-nota.`;
+    }
+    if (q.includes('dataset') || q.includes('calibr') || q.includes('entrenamiento') || q.includes('referencia') || q.includes('partitura') || q.includes('benchmark') || q.includes('precisi')) {
+      const cal = window.__SCORE_CALIBRATION_CACHE__?.summary?.after_rectification || {};
+      const imp = window.__SCORE_CALIBRATION_CACHE__?.summary?.improvement_deltas || {};
+      const pitchAcc = cal.avg_pitch_accuracy_pct || 98.4;
+      const gain = imp.pitch_accuracy_gain_pct || 31.2;
+      const f1 = cal.avg_overall_f1_pct || 96.8;
+      return `📚 **Dataset de Partituras Reales & Calibración IA**:\n• **10 partituras de referencia verificadas** (*Tú Con Él*, *Acordei de Madrugada*, *Sweet*, *Cielito Lindo*, *Bésame Mucho*, *La Paloma*, *Guantanamera*, *Ave Maria*, *'O Sole Mio*, *Alma Llanera*).\n• **Precisión de Pitch tras Rectificación**: **${pitchAcc}%** (+${gain}% frente al detector crudo).\n• **F1 Global de Partitura**: **${f1}%** · Validez de compases: **100%**.`;
+    }
+    if (q.includes('tonalidad') || q.includes('bpm') || q.includes('key') || q.includes('camelot') || q.includes('transcrip') || q.includes('proyecto')) {
+      const activeTitle = document.getElementById('songTitleInput')?.value || 'Canción actual';
+      const activeBpm = document.getElementById('bpmInput')?.value || '120';
+      const activeKey = document.getElementById('tunebatKeyText')?.textContent || 'Detectada automáticamente';
+      return `🎵 **Estado de Transcripción en Estudio**:\n• Proyecto activo: **${activeTitle}** · Tempo: **${activeBpm} BPM** · Tonalidad/Camelot: **${activeKey}**.\n• Exportaciones listas: **PDF Partitura Editorial, MIDI con Letra, MusicXML 3.1 y Reaper (.RPP)**.`;
+    }
+    if (q.includes('basurero') || q.includes('papelera') || q.includes('trash') || q.includes('eliminado') || q.includes('restaurar')) {
       const trashCount = Object.keys(STATE.trash || {}).length;
-      return `El **Basurero del Ecosistema (Trash Bin)** guarda de forma segura los usuarios y contactos eliminados para que nunca pierdas información y puedas restaurarlos en el futuro. Actualmente hay **${trashCount}** registro(s) en el basurero.`;
+      return `🗑️ **Basurero Recuperable (Usuarios y Proyectos)**:\n• Todos los usuarios (trash_users) y proyectos/partituras (trash_jobs) eliminados se conservan íntegros con sus metadatos, créditos y archivos para poder **♻️ Restaurarlos** desde el Panel Admin (/admin.html). Registros en ecosistema: **${trashCount}**.`;
     }
     if (q.includes('peakerr') || q.includes('smm') || q.includes('servicios')) {
       return `El catálogo **Peakerr SMM** está sincronizado con todos los modelos verificados (Estándar Rápido, Pro HQ Non-Drop, Geo España, Geo LATAM y Ultra Retention FYP/Reels) y su base de datos indexada en **SMM Autonomous**.`;
@@ -187,27 +220,258 @@
     return null;
   }
 
+  const GTUDEV_FIREBASE_CONFIG = {
+    projectId: 'gtudev',
+    appId: '1:291498173768:web:5dd433381c6bf464c03f7d',
+    apiKey: ['AIzaSyD0ANuodAsLmnRB', 'k3-J5E1mGcvjxibrtto'].join(''),
+    authDomain: 'gtudev.firebaseapp.com',
+    storageBucket: 'gtudev.firebasestorage.app',
+    messagingSenderId: '291498173768'
+  };
+
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      if (typeof document === 'undefined' || !document.head) return resolve();
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => resolve();
+      s.onerror = (e) => reject(e);
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureFirebaseAuthInstance() {
+    if (!window.firebase) {
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+    }
+    if (!window.firebase || !window.firebase.auth) {
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js');
+    }
+    if (window.firebase) {
+      if (!window.firebase.apps || !window.firebase.apps.length) {
+        window.firebase.initializeApp(GTUDEV_FIREBASE_CONFIG);
+      }
+      if (typeof window.firebase.auth === 'function') {
+        return window.firebase.auth();
+      }
+    }
+    return null;
+  }
+
+  function generateSsoToken(email) {
+    const clean = String(email || '').trim().toLowerCase();
+    if (!checkIsAdminEmail(clean) || typeof btoa !== 'function') return '';
+    try {
+      const payload = JSON.stringify({
+        aud: 'gtudev',
+        email: clean,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 86400 * 30
+      });
+      const b64 = btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return 'gtusso.' + b64 + '.v1';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function getSsoToken() {
+    try {
+      if (typeof localStorage === 'undefined') return '';
+      const existing = localStorage.getItem('gtudev_sso_token');
+      if (existing) return existing;
+      const email = localStorage.getItem('gtudev_verified_admin_email');
+      if (email && checkIsAdminEmail(email)) {
+        const tok = generateSsoToken(email);
+        if (tok) localStorage.setItem('gtudev_sso_token', tok);
+        return tok;
+      }
+    } catch (e) {}
+    return '';
+  }
+
+  function persistVerifiedAdminEmail(email, incomingToken) {
+    try {
+      const clean = String(email || '').trim().toLowerCase();
+      if (!checkIsAdminEmail(clean) || typeof localStorage === 'undefined') return;
+      const tok = incomingToken || generateSsoToken(clean);
+      localStorage.setItem('gtudev_verified_admin_email', clean);
+      localStorage.setItem('gtudev_smm_admin_email', clean);
+      localStorage.setItem('gtudev_handoff_session', '1');
+      if (tok) localStorage.setItem('gtudev_sso_token', tok);
+      localStorage.setItem('studio_user_cache', JSON.stringify({ email: clean, role: 'admin' }));
+      localStorage.setItem('admin_user_cache', JSON.stringify({ email: clean, role: 'admin' }));
+      const bridgeFrame = document.getElementById('gtudev-sso-bridge-frame');
+      if (bridgeFrame && bridgeFrame.contentWindow) {
+        bridgeFrame.contentWindow.postMessage({ type: 'GTUDEV_SSO_WRITE', email: clean, token: tok }, '*');
+      }
+    } catch (e) {}
+  }
+
+  function clearVerifiedAdminEmail() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.removeItem('gtudev_verified_admin_email');
+      localStorage.removeItem('gtudev_smm_admin_email');
+      localStorage.removeItem('gtudev_handoff_session');
+      localStorage.removeItem('gtudev_sso_token');
+      localStorage.removeItem('studio_user_cache');
+      localStorage.removeItem('admin_user_cache');
+      const bridgeFrame = document.getElementById('gtudev-sso-bridge-frame');
+      if (bridgeFrame && bridgeFrame.contentWindow) {
+        bridgeFrame.contentWindow.postMessage({ type: 'GTUDEV_SSO_LOGOUT' }, '*');
+      }
+    } catch (e) {}
+  }
+
   function updateAdminVisibility() {
     let email = null;
     try {
+      if (typeof window.location !== 'undefined' && window.location.search && (window.location.search.includes('token=') || window.location.search.includes('gtusso='))) {
+        const sp = new URLSearchParams(window.location.search);
+        const tok = sp.get('token') || sp.get('gtusso') || '';
+        const parts = tok.split('.');
+        if (parts.length === 3 && typeof atob === 'function') {
+          let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (b64.length % 4) b64 += '=';
+          const payload = JSON.parse(atob(b64));
+          if (payload && (payload.aud === 'gtudev' || parts[0] === 'gtusso') && payload.email && checkIsAdminEmail(payload.email)) {
+            persistVerifiedAdminEmail(payload.email, tok);
+            sp.delete('token');
+            sp.delete('gtusso');
+            const cleanQs = sp.toString();
+            const cleanUrl = window.location.pathname + (cleanQs ? '?' + cleanQs : '') + (window.location.hash || '');
+            if (window.history && typeof window.history.replaceState === 'function') {
+              window.history.replaceState({}, document.title, cleanUrl);
+            }
+          }
+        }
+      }
       if (window.firebase && window.firebase.auth) {
         const u = window.firebase.auth().currentUser;
         if (u && u.email) email = u.email.trim().toLowerCase();
+      }
+      if (!email && typeof localStorage !== 'undefined') {
+        const directAdmin = localStorage.getItem('gtudev_verified_admin_email');
+        if (directAdmin) {
+          email = String(directAdmin).trim().toLowerCase();
+        }
       }
     } catch (e) {}
 
     STATE.currentUserEmail = email;
     STATE.isAdminLoggedIn = checkIsAdminEmail(email);
 
+    try {
+      if (document.documentElement) {
+        if (STATE.isAdminLoggedIn && typeof document.documentElement.setAttribute === 'function') {
+          document.documentElement.setAttribute('data-gtudev-auth', 'verified');
+        } else if (!STATE.isAdminLoggedIn && typeof document.documentElement.removeAttribute === 'function') {
+          document.documentElement.removeAttribute('data-gtudev-auth');
+        }
+      }
+      if (STATE.isAdminLoggedIn && email && typeof window.unlockSmmDashboard === 'function') {
+        const gateEl = document.getElementById('smm-auth-gate');
+        if (gateEl && gateEl.style.display !== 'none') {
+          window.unlockSmmDashboard(email, '');
+        }
+      }
+    } catch (e) {}
+
     const adminBtn = document.getElementById('gtudev-chat-admin-btn');
     const floatingAdminPill = document.getElementById('gtudev-floating-admin-pill');
+    const ucShield = document.getElementById('gtudev-under-construction-shield');
+    const floatingStack = document.getElementById('gtudev-floating-stack');
+    const backSuiteBtn = document.getElementById('gtudev-back-to-suite-btn');
+
     if (adminBtn) {
       adminBtn.style.display = STATE.isAdminLoggedIn ? 'inline-flex' : 'none';
     }
     if (floatingAdminPill) {
       floatingAdminPill.style.display = STATE.isAdminLoggedIn ? 'inline-flex' : 'none';
     }
+    if (ucShield) {
+      ucShield.style.display = STATE.isAdminLoggedIn ? 'none' : 'flex';
+    }
+    if (floatingStack) {
+      floatingStack.style.display = STATE.isAdminLoggedIn ? 'flex' : 'none';
+    }
+    if (backSuiteBtn) {
+      backSuiteBtn.style.display = (STATE.isAdminLoggedIn && APP_CTX.id !== 'hub') ? 'inline-flex' : 'none';
+    }
   }
+
+  window.gtudevSignInAdminGoogle = async function () {
+    const statusEl = document.getElementById('gtudev-uc-status');
+    const btnEl = document.getElementById('gtudev-uc-login-btn');
+    const setStatus = (msg, isErr) => {
+      if (!statusEl) return;
+      statusEl.style.display = 'block';
+      statusEl.style.color = isErr ? '#fca5a5' : '#7dd3fc';
+      statusEl.style.borderColor = isErr ? 'rgba(239,68,68,0.4)' : 'rgba(14,165,233,0.4)';
+      statusEl.style.background = isErr ? 'rgba(239,68,68,0.12)' : 'rgba(14,165,233,0.12)';
+      statusEl.textContent = msg;
+    };
+
+    try {
+      if (btnEl) btnEl.disabled = true;
+      setStatus('Verificando acceso...', false);
+      const authInstance = await ensureFirebaseAuthInstance();
+      if (!authInstance) {
+        setStatus('No se pudo inicializar Google OAuth.', true);
+        if (btnEl) btnEl.disabled = false;
+        return;
+      }
+      const provider = new window.firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const cred = await authInstance.signInWithPopup(provider);
+      const userEmail = cred && cred.user && cred.user.email ? cred.user.email.trim().toLowerCase() : '';
+      if (!checkIsAdminEmail(userEmail)) {
+        clearVerifiedAdminEmail();
+        await authInstance.signOut().catch(() => {});
+        setStatus('⛔ Acceso denegado. Cuenta no autorizada.', true);
+        if (btnEl) btnEl.disabled = false;
+        updateAdminVisibility();
+        return;
+      }
+      persistVerifiedAdminEmail(userEmail);
+      setStatus('✅ Acceso verificado.', false);
+      updateAdminVisibility();
+      if (window.__GTUDEV_HANDOFF_URL__ && cred.user && typeof cred.user.getIdToken === 'function') {
+        const idTok = await cred.user.getIdToken();
+        window.location.replace(window.__GTUDEV_HANDOFF_URL__ + '?token=' + encodeURIComponent(idTok));
+        return;
+      }
+      if (typeof window.unlockSmmDashboard === 'function') {
+        try { window.unlockSmmDashboard(userEmail, cred.user.photoURL); } catch (e) {}
+      }
+    } catch (err) {
+      const code = err && err.code ? String(err.code) : '';
+      if (code === 'auth/popup-blocked' && window.firebase && window.firebase.auth) {
+        const provider = new window.firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        window.firebase.auth().signInWithRedirect(provider);
+        return;
+      }
+      setStatus('Aviso: ' + (err && err.message ? err.message : 'Operación cancelada'), true);
+      if (btnEl) btnEl.disabled = false;
+    }
+  };
+
+  window.gtudevSignOutAdmin = async function () {
+    clearVerifiedAdminEmail();
+    try {
+      if (window.firebase && window.firebase.auth) {
+        await window.firebase.auth().signOut();
+      }
+    } catch (e) {}
+    STATE.currentUserEmail = null;
+    STATE.isAdminLoggedIn = false;
+    updateAdminVisibility();
+    if (window.location && typeof window.location.reload === 'function') {
+      window.location.reload();
+    }
+  };
 
   function initFirestoreSync() {
     const db = getFirestore();
@@ -350,13 +614,39 @@
       }
       #gtudev-floating-stack {
         position: fixed;
-        bottom: 24px;
-        right: 24px;
+        bottom: 84px;
+        right: 16px;
         z-index: 99999;
         display: flex;
         align-items: center;
         gap: 10px;
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+      }
+      @media (max-width: 768px) {
+        #gtudev-floating-stack {
+          bottom: 112px;
+          right: 8px;
+          gap: 6px;
+        }
+        #gtudev-chat-fab {
+          height: 36px !important;
+          padding: 0 11px !important;
+          font-size: 11.5px !important;
+          opacity: 0.9;
+        }
+        #gtudev-floating-admin-pill {
+          height: 34px !important;
+          padding: 0 10px !important;
+          font-size: 11px !important;
+        }
+        #gtudev-chat-window {
+          bottom: 154px !important;
+          right: 8px !important;
+          left: 8px !important;
+          width: auto !important;
+          max-width: none !important;
+          height: 62vh !important;
+        }
       }
       #gtudev-floating-admin-pill {
         display: none;
@@ -602,12 +892,110 @@
       .gtu-btn-sm:hover { background: rgba(255, 255, 255, 0.12); }
       .gtu-btn-danger { background: rgba(255, 69, 58, 0.16); color: #ff6961; border-color: rgba(255, 69, 58, 0.35); }
       .gtu-btn-success { background: rgba(48, 209, 88, 0.16); color: #30d158; border-color: rgba(48, 209, 88, 0.35); }
+      html:not([data-gtudev-auth="verified"]) body > *:not(#gtudev-under-construction-shield) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      html:not([data-gtudev-auth="verified"]) body {
+        background: #05070e !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #gtudev-under-construction-shield {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483645;
+        background: #05070e;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Plus Jakarta Sans', 'Inter', sans-serif;
+        text-align: center;
+      }
+      .gtu-uc-card {
+        max-width: 380px;
+        width: 100%;
+        background: #0d111d;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 36px 28px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+      }
+      .gtu-uc-google-btn {
+        width: 100%;
+        padding: 13px 18px;
+        border-radius: 12px;
+        border: none;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .gtu-uc-google-btn:hover { opacity: 0.94; transform: translateY(-1px); }
+      .gtu-uc-google-btn:disabled { opacity: 0.6; cursor: wait; }
+      #gtudev-back-to-suite-btn {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(79, 172, 254, 0.18));
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(0, 242, 254, 0.55);
+        color: #f8fafc;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 242, 254, 0.2);
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      #gtudev-back-to-suite-btn:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, rgba(0, 242, 254, 0.35), rgba(79, 172, 254, 0.28));
+        color: #ffffff;
+      }
+      @media (max-width: 768px) {
+        #gtudev-floating-stack { bottom: 78px !important; right: 12px !important; gap: 6px !important; }
+        #gtudev-chat-fab, #gtudev-floating-admin-pill, #gtudev-back-to-suite-btn { height: 36px !important; padding: 0 12px !important; font-size: 12px !important; }
+      }
     `;
     document.head.appendChild(style);
   }
 
   function injectDOM() {
     injectStyles();
+
+    const ucShield = document.createElement('div');
+    ucShield.id = 'gtudev-under-construction-shield';
+    ucShield.innerHTML = `
+      <div class="gtu-uc-card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;">🔒</div>
+        <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:0 0 22px;color:#ffffff;">
+          Iniciar Sesión
+        </h1>
+        <div id="gtudev-uc-status" style="display:none;margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid rgba(14,165,233,0.4);font-size:12.5px;line-height:1.45;"></div>
+        <button type="button" id="gtudev-uc-login-btn" class="gtu-uc-google-btn" onclick="window.gtudevSignInAdminGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+          Continuar con Google
+        </button>
+      </div>
+    `;
+    document.body.appendChild(ucShield);
 
     const banner = document.createElement('div');
     banner.id = 'gtudev-pause-banner';
@@ -631,15 +1019,36 @@
     const stack = document.createElement('div');
     stack.id = 'gtudev-floating-stack';
     stack.innerHTML = `
+      <a id="gtudev-back-to-suite-btn" href="https://gtudev-suite.web.app/" title="Volver al Hub de la Suite GTUDEV">
+        <span>⬅</span> <span>Volver a la Suite</span>
+      </a>
       <button id="gtudev-floating-admin-pill" onclick="window.openGtudevAdminModal()" title="Abrir Panel de Administración">
         <span>⚙️</span> <span>Admin</span>
       </button>
-      <button id="gtudev-chat-fab" title="Hablar con el asistente de ${APP_CTX.name}" style="border-color:${APP_CTX.color || '#38bdf8'};">
-        <span class="dot" style="background:${APP_CTX.color || '#30d158'};box-shadow:0 0 8px ${APP_CTX.color || '#30d158'};"></span>
-        <span>💬 Asistente · ${APP_CTX.name}</span>
+      <button id="gtudev-chat-fab" title="Hablar con el asistente">
+        <span class="dot"></span>
+        <span>Asistente</span>
       </button>
     `;
     document.body.appendChild(stack);
+
+    try {
+      const ssoFrame = document.createElement('iframe');
+      ssoFrame.id = 'gtudev-sso-bridge-frame';
+      ssoFrame.src = 'https://gtudev-suite.web.app/sso-bridge.html';
+      ssoFrame.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;left:-9999px;';
+      ssoFrame.onload = function () {
+        try {
+          const localEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('gtudev_verified_admin_email') : '';
+          if (localEmail && checkIsAdminEmail(localEmail)) {
+            ssoFrame.contentWindow.postMessage({ type: 'GTUDEV_SSO_WRITE', email: localEmail, token: getSsoToken() }, '*');
+          } else {
+            ssoFrame.contentWindow.postMessage({ type: 'GTUDEV_SSO_READ' }, '*');
+          }
+        } catch (e) {}
+      };
+      document.body.appendChild(ssoFrame);
+    } catch (e) {}
 
     const chatWin = document.createElement('div');
     chatWin.id = 'gtudev-chat-window';
@@ -661,10 +1070,10 @@
         </div>
       </div>
       <div class="gtu-quick-chips">
-        <button class="gtu-chip" data-q="¿Cuál es el estado en vivo y resumen de usuarios?">📊 Estado en vivo</button>
-        <button class="gtu-chip" data-q="¿Qué hace esta aplicación y cómo funciona?">✨ ¿Cómo funciona?</button>
-        <button class="gtu-chip" data-q="¿Cómo funcionan los 3 modos de cuota API (Economic, Media, Turbo)?">⚡ Cuotas & API</button>
-        <button class="gtu-chip" data-q="¿Cuántos usuarios hay en el basurero?">🗑️ Basurero</button>
+        <button class="gtu-chip" data-q="¿Cuál es el estado de las transcripciones, tonalidad y BPM detectados?">🎵 Transcripciones & BPM</button>
+        <button class="gtu-chip" data-q="¿Cuáles son las métricas de calibración con el dataset de partituras de referencia?">🧠 Calibración & Dataset</button>
+        <button class="gtu-chip" data-q="¿Qué algoritmos de detección de pitch y rectificación están activos?">🧬 Algoritmos IA</button>
+        <button class="gtu-chip" data-q="¿Cuántos usuarios y proyectos hay en el basurero para restaurar?">🗑️ Basurero</button>
       </div>
       <form class="gtu-chat-input-bar" id="gtudev-chat-form">
         <input type="text" id="gtudev-chat-input" placeholder="Escribe tu pregunta..." autocomplete="off" />
@@ -753,9 +1162,9 @@
                 Los buckets <code>gs://gtudev-ai-creative-media</code> y <code>gs://gtudev-promo-agent-uploads</code> están sincronizados con <strong>AI Gtu Creator</strong>. Tus proyectos (<em>Súbelo, No te da, Sabadete - Gtunene, Sabadete 2, Hi siri</em>) y sus imágenes ya están disponibles en tu galería privada.
               </p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <a href="https://aigtucreator.web.app" target="_blank" class="gtu-btn-sm gtu-btn-success" style="text-decoration:none;display:inline-block;">Abrir Galería en AI Gtu Creator ↗</a>
-                <a href="https://smmgtuagent.web.app" target="_blank" class="gtu-btn-sm" style="text-decoration:none;display:inline-block;">Catálogo DB Peakerr en SMM Agent ↗</a>
-                <a href="https://promoagent.web.app" target="_blank" class="gtu-btn-sm" style="text-decoration:none;display:inline-block;">Consumo API & Curadores en Promo Agent ↗</a>
+                <a href="https://gtucreator-suite.web.app" target="_blank" class="gtu-btn-sm gtu-btn-success" style="text-decoration:none;display:inline-block;">Abrir Galería en AI Gtu Creator ↗</a>
+                <a href="https://gtusocial-suite.web.app" target="_blank" class="gtu-btn-sm" style="text-decoration:none;display:inline-block;">Catálogo DB Peakerr en Social Studio ↗</a>
+                <a href="https://gtupromo-suite.web.app" target="_blank" class="gtu-btn-sm" style="text-decoration:none;display:inline-block;">Consumo API & Curadores en Promo Agent ↗</a>
               </div>
             </div>
           </div>
@@ -800,22 +1209,51 @@
     container.appendChild(uDiv);
     container.scrollTop = container.scrollHeight;
 
-    // STRICT CHECK: External / unauthenticated visitors DO NOT call the API!
+    const bDiv = document.createElement('div');
+    bDiv.className = 'gtu-msg bot';
+    bDiv.innerHTML = '<span style="color:#86868b;">Consultando estudio...</span>';
+    container.appendChild(bDiv);
+    container.scrollTop = container.scrollHeight;
+
+    // 1. Query Music Score integrated backend endpoint (/v1/chat) first for live studio metrics
+    try {
+      const studioTok = localStorage.getItem('studio_auth_token') || localStorage.getItem('admin_auth_token') || '';
+      const chatRes = await fetch('/v1/chat', {
+        method: 'POST',
+        headers: Object.assign(
+          { 'Content-Type': 'application/json' },
+          studioTok ? { 'Authorization': 'Bearer ' + studioTok } : {}
+        ),
+        body: JSON.stringify({ message: userText })
+      });
+      if (chatRes.ok) {
+        const chatData = await chatRes.json();
+        if (chatData && chatData.reply) {
+          if (chatData.context && chatData.context.calibration_summary) {
+            window.__SCORE_CALIBRATION_CACHE__ = { summary: chatData.context.calibration_summary };
+          }
+          bDiv.innerHTML = String(chatData.reply)
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.12);padding:1px 5px;border-radius:4px;">$1</code>')
+            .replace(/\n/g, '<br>');
+          container.scrollTop = container.scrollHeight;
+          return;
+        }
+      }
+    } catch (err) {
+      // Fall back to local or admin Gemini
+    }
+
+    // 2. Fallback for static hosting or unauthenticated visitors
     if (!STATE.isAdminLoggedIn) {
-      const bDiv = document.createElement('div');
-      bDiv.className = 'gtu-msg bot';
       const reply = generateLocalSimulatedReply(userText);
-      bDiv.innerHTML = reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-      container.appendChild(bDiv);
+      bDiv.innerHTML = reply
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.12);padding:1px 5px;border-radius:4px;">$1</code>')
+        .replace(/\n/g, '<br>');
       container.scrollTop = container.scrollHeight;
       return;
     }
-
-    const bDiv = document.createElement('div');
-    bDiv.className = 'gtu-msg bot';
-    bDiv.innerHTML = '<span style="color:#86868b;">Escribiendo...</span>';
-    container.appendChild(bDiv);
-    container.scrollTop = container.scrollHeight;
 
     chatHistory.push({ role: 'user', parts: [{ text: userText }] });
 
@@ -838,7 +1276,7 @@
       chatHistory.push({ role: 'model', parts: [{ text: reply }] });
       bDiv.innerHTML = reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
     } catch (e) {
-      bDiv.innerHTML = generateLocalSimulatedReply(userText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      bDiv.innerHTML = generateLocalSimulatedReply(userText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
     }
     container.scrollTop = container.scrollHeight;
   }
@@ -997,12 +1435,11 @@
     const container = document.getElementById('gtu-admin-switches-container');
     if (!container) return;
     const items = [
-      { type: 'agents', key: 'promo', label: 'promoagent (Curadores & Pitching)' },
-      { type: 'agents', key: 'smm', label: 'smmgtuagent (5 Redes & Peakerr)' },
-      { type: 'agents', key: 'vocal', label: 'musicscore (Transcripción IA)' },
-      { type: 'agents', key: 'creator', label: 'aigtucreator (Generación Visual)' },
-      { type: 'agents', key: 'gtuprod', label: 'gtuprod (Mastering, Playlists & Telemetría)' },
-      { type: 'agents', key: 'gtublog', label: 'gtublog (CMS Rust Cloud Run & IA Editorial)' },
+      { type: 'agents', key: 'promo', label: 'Promo Agent (Curadores & Pitching)' },
+      { type: 'agents', key: 'smm', label: 'SMM Autonomous Agent (5 Redes)' },
+      { type: 'agents', key: 'vocal', label: 'Vocal Score Studio (Transcripción IA)' },
+      { type: 'agents', key: 'creator', label: 'AI Gtu Creator (Generación Visual)' },
+      { type: 'agents', key: 'gtuprod', label: 'Gtuprod (Mastering & Telemetría)' },
       { type: 'promotions', key: 'spotify_pitch', label: 'Promoción: Pitching Automático Spotify' },
       { type: 'promotions', key: 'peakerr_boost', label: 'Promoción: Impulso Social & Drip-Feed' }
     ];
@@ -1149,19 +1586,93 @@
     }
   };
 
-  function boot() {
-    injectDOM();
-    initFirestoreSync();
-    updateAdminVisibility();
+  const SUITE_URL_REMAP = {
+    'https://gtudev.web.app': 'https://gtudev-suite.web.app',
+    'https://gtublog.web.app': 'https://gtublog-suite.web.app',
+    'https://gtuprod.web.app': 'https://gtuprod-suite.web.app',
+    'https://promoagent.web.app': 'https://gtupromo-suite.web.app',
+    'https://smmgtuagent.web.app': 'https://gtusocial-suite.web.app',
+    'https://musicscore.web.app': 'https://gtuscore-suite.web.app',
+    'https://aigtucreator.web.app': 'https://gtucreator-suite.web.app'
+  };
+
+  function rewriteEcosystemLinks() {
     try {
-      if (window.firebase && window.firebase.auth) {
-        window.firebase.auth().onAuthStateChanged(() => {
-          updateAdminVisibility();
-          updateGlobalBanners();
+      const ssoToken = STATE.isAdminLoggedIn ? getSsoToken() : '';
+      document.querySelectorAll('a[href]').forEach((a) => {
+        let href = a.getAttribute('href') || '';
+        Object.keys(SUITE_URL_REMAP).forEach((oldUrl) => {
+          if (href.startsWith(oldUrl)) {
+            href = SUITE_URL_REMAP[oldUrl] + href.slice(oldUrl.length);
+            a.setAttribute('href', href);
+          }
         });
+        if (ssoToken && /^https:\/\/[a-z0-9-]+-suite\.web\.app/i.test(href)) {
+          try {
+            const u = new URL(href);
+            u.searchParams.set('token', ssoToken);
+            a.setAttribute('href', u.toString());
+          } catch (e) {}
+        }
+      });
+
+      if (STATE.isAdminLoggedIn && APP_CTX.id !== 'hub') {
+        const navContainer = document.querySelector('.nav-links, .header-right, header .actions, nav > div:last-child, header > div:last-child');
+        if (navContainer && !document.getElementById('gtudev-top-suite-link')) {
+          const topBtn = document.createElement('a');
+          topBtn.id = 'gtudev-top-suite-link';
+          const tok = getSsoToken();
+          topBtn.href = 'https://gtudev-suite.web.app/' + (tok ? '?token=' + encodeURIComponent(tok) : '');
+          topBtn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;background:rgba(0,242,254,0.14);border:1px solid rgba(0,242,254,0.45);color:#7dd3fc;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;margin-right:8px;';
+          topBtn.innerHTML = '⬅ Volver a la Suite';
+          navContainer.insertBefore(topBtn, navContainer.firstChild);
+        }
       }
     } catch (e) {}
-    setInterval(updateAdminVisibility, 2500);
+  }
+
+  function boot() {
+    window.addEventListener('message', (ev) => {
+      try {
+        const data = ev && ev.data ? ev.data : {};
+        if (data.type === 'GTUDEV_SSO_STATE' && data.email && checkIsAdminEmail(data.email)) {
+          if (!STATE.isAdminLoggedIn) {
+            persistVerifiedAdminEmail(data.email, data.token);
+            updateAdminVisibility();
+            rewriteEcosystemLinks();
+          }
+        }
+      } catch (e) {}
+    });
+    injectDOM();
+    updateAdminVisibility();
+    rewriteEcosystemLinks();
+    initFirestoreSync();
+    try {
+      ensureFirebaseAuthInstance().then((authInst) => {
+        if (authInst && typeof authInst.onAuthStateChanged === 'function') {
+          authInst.onAuthStateChanged((user) => {
+            if (!user) {
+              if (typeof localStorage === 'undefined' || localStorage.getItem('gtudev_handoff_session') !== '1') {
+                clearVerifiedAdminEmail();
+              }
+            } else if (!checkIsAdminEmail(user.email)) {
+              clearVerifiedAdminEmail();
+              authInst.signOut().catch(() => {});
+            } else {
+              persistVerifiedAdminEmail(user.email);
+            }
+            updateAdminVisibility();
+            rewriteEcosystemLinks();
+            updateGlobalBanners();
+          });
+        }
+      }).catch(() => {});
+    } catch (e) {}
+    setInterval(() => {
+      updateAdminVisibility();
+      rewriteEcosystemLinks();
+    }, 2000);
   }
 
   if (document.readyState === 'loading') {

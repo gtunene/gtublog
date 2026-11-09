@@ -14,77 +14,64 @@ service cloud.firestore {
               request.auth.token.email.lower() == 'info@dev.gtunene.com');
     }
 
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // 1. Waiting List: anyone can join (create), admins can manage all
+    // 1. Waiting List: 100% Private (SuperAdmin only)
     match /waiting_list/{entryId} {
-      allow read: if true;
-      allow create: if request.resource.data.email is string &&
-                       request.resource.data.email.size() > 3 &&
-                       request.resource.data.email.size() < 180;
-      allow update, delete: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 2. Ecosystem Users (Permissions, Roles, Bans across all 6 apps)
+    // 2. Ecosystem Users (100% Private: SuperAdmin only)
     match /ecosystem_users/{docId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 3. Ecosystem Global State (Agent Pause/Resume & Promotions Pause/Resume)
+    // 3. Ecosystem Global State (100% Private: SuperAdmin only)
     match /ecosystem_config/{docId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 3b. Ecosystem Trash Bin (Soft-deleted users, waitlist entries, leads across all apps)
+    // 3b. Ecosystem Trash Bin (100% Private: SuperAdmin only)
     match /ecosystem_trash/{docId} {
       allow read, write: if isSuperAdmin();
     }
 
-    // 4. Shared Users Collection
+    // 4. Shared Users Collection (100% Private: SuperAdmin only)
     match /users/{userId} {
-      allow read: if isAuthenticated() || isSuperAdmin();
-      allow write: if isOwner(userId) || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 5. Vocal Score Studio Collections
+    // 5. Vocal Score Studio Collections (100% Private: SuperAdmin only)
     match /conversions/{conversionId} {
-      allow read, write: if isAuthenticated() || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
     match /human_orders/{orderId} {
-      allow read, write: if isAuthenticated() || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
     match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 6. AI Creative Assistant & SMM Collections
+    // 6. AI Creative Assistant & SMM Collections (100% Private: SuperAdmin only)
     match /ai_creator_projects/{projectId} {
-      allow read, write: if isAuthenticated() || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
-    // 7. GTUBLOG Collections (Public read for posts, SuperAdmin write & trash)
+    // 7. GTUBLOG Collections (100% Private: SuperAdmin only)
     match /blog_posts/{postId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
     match /blog_trash/{trashId} {
       allow read, write: if isSuperAdmin();
     }
 
-    // 8. Gtuprod Playlists & Trash Bin
+    // 8. Gtuprod Playlists & Trash Bin (100% Private: SuperAdmin only)
     match /gtuprod_tracks/{trackId} {
-      allow read: if true;
-      allow write: if isAuthenticated() || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
     match /gtuprod_trash/{trashId} {
-      allow read, write: if isAuthenticated() || isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
+    // Catch-all: 100% Private (ONLY gerarditomusic@gmail.com and info@dev.gtunene.com)
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }

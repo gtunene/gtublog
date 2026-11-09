@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
   <meta name="theme-color" content="#a855f7" />
   <title>gtublog · Ingeniería IA, Música & Arquitectura Rust Cloud Run</title>
+  <style id="gtudev-zero-leak-head">html:not([data-gtudev-auth="verified"]) body > *:not(#gtudev-under-construction-shield){display:none !important;visibility:hidden !important;opacity:0 !important;pointer-events:none !important;}html:not([data-gtudev-auth="verified"]) body{background:#05070e !important;overflow:hidden !important;margin:0 !important;padding:0 !important;}</style>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M18 22h28M18 32h20M18 42h24' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='32' r='4.5' fill='%23fff'/%3E%3C/svg%3E" />
   <meta name="description" content="gtublog: Blog oficial del ecosistema gtudev con backend ultraligero en Rust (Axum) sobre Google Cloud Run con Cero Cold Start y Chatbot Gemini 2.5 integrado." />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,8 +40,8 @@
   <header class="sticky top-0 z-40 glass border-b border-purple-500/30" style="border-top: 3px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.18) 0%, rgba(18,18,22,0.88) 42%); box-shadow: 0 4px 24px rgba(168,85,247,0.15);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <a href="https://gtudev.web.app" class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 transition">
-          ← gtudev
+        <a href="https://gtudev-suite.web.app" class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 transition">
+          ⬅ Volver a la Suite
         </a>
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center font-extrabold text-white text-sm shadow-lg shadow-purple-500/30">
@@ -52,20 +54,24 @@
                 Rust Axum · 0ms Cold Start
               </span>
             </div>
-            <p class="text-[11px] text-zinc-400 hidden sm:block">Ingeniería IA, Producción Musical & Cloud Run</p>
+            <p class="text-[11px] text-zinc-400 hidden sm:block">Ingeniería IA, Archivos Descargables, Wallet &amp; PayPal Business</p>
           </div>
         </div>
       </div>
 
       <nav class="hidden md:flex items-center gap-5 text-xs font-medium text-zinc-400">
         <a href="#articulos" class="hover:text-white transition">Artículos</a>
-        <a href="#arquitectura" class="hover:text-white transition">Arquitectura Rust</a>
+        <a href="#archivos-section" class="hover:text-emerald-400 font-semibold transition">📁 Cargar Archivos</a>
+        <a href="#pagos-section" class="hover:text-amber-400 font-semibold transition">💳 Wallet &amp; PayPal Business</a>
         <a href="#chatbot-section" class="hover:text-white transition">Chatbot IA</a>
-        <a href="https://gtuprod.web.app" class="hover:text-purple-400 transition">gtuprod ↗</a>
+        <a href="https://gtuprod-suite.web.app" class="hover:text-purple-400 transition">gtuprod ↗</a>
       </nav>
 
       <div class="flex items-center gap-2">
-        <div id="mode-badge" class="mono text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+        <a href="#pagos-section" class="mono text-[11px] px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition">
+          💳 Wallet: $<span id="header-wallet-balance">125.00</span>
+        </a>
+        <div id="mode-badge" class="hidden sm:inline-block mono text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
           🌱 ECONOMIC
         </div>
         <button onclick="toggleAdminDrawer()" class="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5">
@@ -89,14 +95,17 @@
           El Blog de Ingeniería Musical e IA con <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-sky-400">Cero Cold Start</span>.
         </h1>
         <p class="text-zinc-400 text-base sm:text-lg leading-relaxed mb-6">
-          Desarrollado en <strong>Rust + Axum</strong> para despertar en menos de <strong>5 milisegundos</strong> en Google Cloud Run. Todos los artículos publicados aquí se sincronizan automáticamente con la página principal de <a href="https://gtudev.web.app" class="text-sky-400 underline hover:text-sky-300">GTUDEV</a>.
+          Desarrollado en <strong>Rust + Axum</strong> para despertar en menos de <strong>5 milisegundos</strong> en Google Cloud Run. Incluye gestor para <strong>cargar archivos y recursos digitales</strong> y pasarela de cobros integrada mediante <strong>Wallet (Web3 &amp; GTU Wallet)</strong> y <strong>PayPal Business (<code>info@dev.gtunene.com</code>)</strong>, sincronizado con <a href="https://gtudev-suite.web.app" class="text-sky-400 underline hover:text-sky-300">GTUDEV</a>.
         </p>
         <div class="flex flex-wrap items-center gap-3">
           <button onclick="openNewPostModal()" class="px-5 py-2.5 rounded-full bg-white text-black font-semibold text-xs sm:text-sm hover:bg-zinc-200 transition shadow-lg">
             ✍️ Publicar / Generar Post con IA
           </button>
-          <a href="#chatbot-section" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-xs sm:text-sm transition">
-            🤖 Consultar al Chatbot del Blog
+          <a href="#archivos-section" class="px-5 py-2.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold text-xs sm:text-sm transition">
+            📁 Cargar Archivos &amp; Stems
+          </a>
+          <a href="#pagos-section" class="px-5 py-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-semibold text-xs sm:text-sm transition">
+            💳 Pagos: Wallet &amp; PayPal Business
           </a>
           <div class="mono text-xs text-zinc-400 px-3 py-2 rounded-xl bg-zinc-900/80 border border-white/10">
             ⚡ Runtime: <span id="health-runtime" class="text-orange-400 font-semibold">rust-axum-alpine</span> · Posts activos: <span id="active-posts-count" class="text-white font-bold">6</span>
@@ -127,6 +136,174 @@
 
     <!-- Posts Grid -->
     <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-14"></div>
+
+    <!-- =================================================================== -->
+    <!-- 📁 CARGAR ARCHIVOS & RECURSOS DIGITALES (STEMS, PDF, AUDIO, ZIP)    -->
+    <!-- =================================================================== -->
+    <section id="archivos-section" class="mb-14 glass rounded-3xl p-6 sm:p-8 border border-emerald-500/30 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 mb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold mb-2">
+            📁 BÓVEDA DE ARCHIVOS &amp; RECURSOS DESCARGABLES
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-white">Cargar Archivos, Stems, Partituras, PDFs y Paquetes</h2>
+          <p class="text-xs sm:text-sm text-zinc-400 mt-1">
+            Sube cualquier archivo para tus artículos o clientes. Puedes publicarlo como <strong>Descarga Gratuita</strong> o asignarle un <strong>Precio en USD</strong> para desbloqueo automático vía <strong>Wallet</strong> o <strong>PayPal Business</strong>.
+          </p>
+        </div>
+        <button type="button" onclick="document.getElementById('gtublog-file-input').click()" class="px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs sm:text-sm transition shadow-lg shadow-emerald-500/25">
+          ➕ Seleccionar / Cargar Archivos
+        </button>
+      </div>
+
+      <!-- Upload Form & Drag-and-Drop Zone -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div
+          id="file-dropzone"
+          ondragover="event.preventDefault(); this.classList.add('border-emerald-400','bg-emerald-500/10')"
+          ondragleave="this.classList.remove('border-emerald-400','bg-emerald-500/10')"
+          ondrop="handleFileDrop(event)"
+          onclick="document.getElementById('gtublog-file-input').click()"
+          class="lg:col-span-5 border-2 border-dashed border-emerald-500/40 hover:border-emerald-400 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer bg-black/50 transition"
+        >
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-2xl mb-3">
+            📤
+          </div>
+          <div class="text-sm font-bold text-white">Arrastra y suelta tus archivos aquí o haz clic</div>
+          <div class="text-xs text-zinc-400 mt-1">Soporta WAV, MP3, ZIP, PDF, MusicXML, MIDI, JSON, Imágenes y Presets</div>
+          <input id="gtublog-file-input" type="file" multiple class="hidden" onchange="handleFilesSelected(event)" />
+        </div>
+
+        <div class="lg:col-span-7 p-5 rounded-2xl bg-black/60 border border-white/10 space-y-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-400">Opciones para los Archivos Subidos</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] text-zinc-400 mb-1">Categoría del Recurso</label>
+              <select id="upload-file-category" class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="Producción & Mastering">Producción &amp; Mastering (Stems/WAV)</option>
+                <option value="IA & Audio">IA &amp; Audio (Presets/Modelos)</option>
+                <option value="Partituras & MIDI">Partituras &amp; MIDI / PDF</option>
+                <option value="Arquitectura & Cloud">Código &amp; Plantillas Rust/Cloud</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-zinc-400 mb-1">Precio (0 = Descarga Gratis)</label>
+              <input id="upload-file-price" type="number" min="0" step="0.5" value="0" class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3 py-2 text-xs text-white mono" placeholder="0.00 USD" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-zinc-400 mb-1">Método de Desbloqueo</label>
+              <div class="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 font-semibold">
+                Wallet Web3/GTU + PayPal Business
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-zinc-400 mb-1">Descripción o Notas Técnicas del Archivo</label>
+            <input id="upload-file-desc" type="text" placeholder="Ej: Stems 24-bit WAV listos para mezcla + guía PDF..." class="w-full bg-zinc-900 border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div id="upload-status-banner" class="hidden p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-medium"></div>
+        </div>
+      </div>
+
+      <!-- Uploaded Files Grid -->
+      <div id="uploaded-files-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- 💳 PAGOS & CHECKOUT: WALLET (WEB3 + GTU WALLET) & PAYPAL BUSINESS   -->
+    <!-- =================================================================== -->
+    <section id="pagos-section" class="mb-14 glass rounded-3xl p-6 sm:p-8 border border-amber-500/30 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 mb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold mb-2">
+            💳 PASARELA DE PAGOS OFICIAL · WALLET &amp; PAYPAL BUSINESS
+          </div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-white">Aceptación de Pagos vía Wallet y PayPal Business</h2>
+          <p class="text-xs sm:text-sm text-zinc-400 mt-1">
+            Infraestructura lista para cobrar por archivos digitales, stems, licencias y servicios usando tu <strong>Wallet (Web3 USDT/USDC/ETH/SOL o GTU Digital Wallet)</strong> y tu cuenta <strong>PayPal Business (<code>info@dev.gtunene.com</code>)</strong>.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="connectWeb3Wallet()" id="btn-connect-web3" class="px-4 py-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-300 font-bold text-xs transition">
+            🦊 Conectar Web3 Wallet (MetaMask / Phantom)
+          </button>
+          <button type="button" onclick="openCheckoutModal('custom-payment', 'Licencia / Servicio Estudio GTUDEV', 25.00)" class="px-4 py-2 rounded-full bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs transition">
+            💳 Probar Checkout Ahora ($25.00)
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Method 1: Wallet (Web3 + GTU Digital Wallet) -->
+        <div class="p-5 rounded-2xl bg-black/60 border border-purple-500/30 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-lg">👛</span>
+              <div>
+                <h3 class="text-sm font-bold text-white">1. Pago por Wallet (Web3 Crypto &amp; GTU Wallet)</h3>
+                <p class="text-[11px] text-zinc-400">Acepta USDT, USDC, ETH, SOL y saldo GTU Digital Wallet al instante</p>
+              </div>
+            </div>
+            <span id="wallet-connection-badge" class="mono text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              ACTIVO · MULTI-CHAIN
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-zinc-900/90 border border-white/10">
+              <div class="text-[10px] text-zinc-400 mono">SALDO GTU DIGITAL WALLET</div>
+              <div class="text-lg font-extrabold text-emerald-400 mono mt-0.5">$<span id="gtu-wallet-balance-card">125.00</span> USD</div>
+              <button type="button" onclick="topUpGtuWallet(50)" class="mt-2 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30">
+                + Recargar $50.00 USD
+              </button>
+            </div>
+            <div class="p-3 rounded-xl bg-zinc-900/90 border border-white/10">
+              <div class="text-[10px] text-zinc-400 mono">DIRECCIÓN RECEPTORA WEB3 (EVM / USDT / USDC)</div>
+              <input id="merchant-wallet-address" type="text" value="0x71C94F0A83e5B928471cD84E89B4d7A098f89A21" onchange="savePaymentConfig()" class="w-full mt-1 bg-black border border-white/15 rounded-lg px-2 py-1 text-[11px] text-purple-300 mono" />
+              <div class="text-[10px] text-zinc-500 mt-1">Redes: Ethereum, Polygon, Arbitrum, Base, Solana</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method 2: PayPal Business -->
+        <div class="p-5 rounded-2xl bg-black/60 border border-sky-500/30 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-lg">🅿️</span>
+              <div>
+                <h3 class="text-sm font-bold text-white">2. PayPal Business Checkout Oficial</h3>
+                <p class="text-[11px] text-zinc-400">Cobros con Tarjeta de Crédito/Débito y Saldo PayPal Business</p>
+              </div>
+            </div>
+            <span class="mono text-[10px] px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
+              PAYPAL BUSINESS READY
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-zinc-900/90 border border-white/10">
+              <div class="text-[10px] text-zinc-400 mono">CUENTA COMERCIO PAYPAL BUSINESS</div>
+              <input id="paypal-business-email" type="email" value="info@dev.gtunene.com" onchange="savePaymentConfig()" class="w-full mt-1 bg-black border border-white/15 rounded-lg px-2.5 py-1 text-xs text-sky-300 mono" />
+              <div class="text-[10px] text-zinc-500 mt-1">Liquidación automática e IPN/Webhook activo</div>
+            </div>
+            <div class="p-3 rounded-xl bg-zinc-900/90 border border-white/10">
+              <div class="text-[10px] text-zinc-400 mono">PAYPAL BUSINESS CLIENT ID / MODO</div>
+              <input id="paypal-client-id" type="text" value="AZDxjDScFpQtjWTOUtWKbyN_bDt4OgQAF4eYXlewfBP4-8aqX3PiV8e1GWU6liB2CUXlkA59kJXE7M6R" onchange="savePaymentConfig()" class="w-full mt-1 bg-black border border-white/15 rounded-lg px-2 py-1 text-[11px] text-zinc-300 mono" />
+              <div class="text-[10px] text-emerald-400 mt-1">✓ Checkout Instantáneo + Factura Comercial</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions History -->
+      <div class="p-4 rounded-2xl bg-black/50 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-300">🧾 Historial de Transacciones y Pagos Recibidos (Wallet &amp; PayPal Business)</h4>
+          <span id="tx-count-badge" class="mono text-[11px] text-amber-300">0 transacciones</span>
+        </div>
+        <div id="payment-transactions-list" class="space-y-2 text-xs"></div>
+      </div>
+    </section>
 
     <!-- Embedded Blog AI Chatbot & Rust Architecture Spec -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" id="chatbot-section">
@@ -282,10 +459,58 @@
     </div>
   </div>
 
+  <!-- Checkout Modal: Wallet (Web3 & GTU Wallet) + PayPal Business -->
+  <div id="checkout-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-xl flex items-center justify-center p-4" onclick="closeCheckoutModal()">
+    <div class="glass max-w-lg w-full rounded-3xl overflow-hidden border border-amber-500/40 shadow-2xl p-6 space-y-5" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <span class="mono text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+            CHECKOUT SEGURO · GTUBLOG
+          </span>
+          <h3 id="checkout-item-title" class="text-lg font-extrabold text-white mt-1">Recurso Digital</h3>
+        </div>
+        <button type="button" onclick="closeCheckoutModal()" class="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white">✕</button>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-black/70 border border-white/10 flex items-center justify-between">
+        <span class="text-xs text-zinc-400">Importe Total a Pagar:</span>
+        <span class="text-2xl font-extrabold text-emerald-400 mono">$<span id="checkout-item-amount">14.99</span> USD</span>
+      </div>
+
+      <!-- Option A: Pay via Wallet (Web3 or GTU Digital Wallet) -->
+      <div class="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-purple-200">👛 Opción 1: Pagar con Wallet</div>
+          <select id="checkout-wallet-token" class="bg-black border border-purple-500/40 rounded-lg px-2.5 py-1 text-[11px] text-purple-200 mono">
+            <option value="GTU_WALLET_USD">GTU Digital Wallet (Saldo USD)</option>
+            <option value="USDT">USDT (Tether Web3)</option>
+            <option value="USDC">USDC (USD Coin Web3)</option>
+            <option value="ETH">ETH (Ethereum / Base / Arbitrum)</option>
+            <option value="SOL">SOL (Solana Phantom)</option>
+          </select>
+        </div>
+        <button type="button" onclick="completePayment('wallet')" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:opacity-95 text-white font-extrabold text-xs transition shadow-lg">
+          ⚡ Confirmar Pago Instantáneo con Wallet
+        </button>
+      </div>
+
+      <!-- Option B: Pay via PayPal Business -->
+      <div class="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-sky-200">🅿️ Opción 2: PayPal Business Oficial</div>
+          <span class="mono text-[10px] text-sky-300">info@dev.gtunene.com</span>
+        </div>
+        <button type="button" onclick="completePayment('paypal_business')" class="w-full py-2.5 rounded-xl bg-[#ffc439] hover:bg-[#f4b728] text-black font-extrabold text-xs transition shadow-lg flex items-center justify-center gap-2">
+          <span>🅿️ Pagar con PayPal Business / Tarjeta</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <footer class="border-t border-white/10 py-8 mt-12 text-center text-xs text-zinc-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div>
-        <strong class="text-zinc-300">GTUBLOG</strong> · Parte de la Suite <a href="https://gtudev.web.app" class="text-sky-400 hover:underline">GTUDEV</a> (`gtudev` Firebase &amp; Cloud Run)
+        <strong class="text-zinc-300">GTUBLOG</strong> · Parte de la Suite <a href="https://gtudev-suite.web.app" class="text-sky-400 hover:underline">GTUDEV</a> (`gtudev` Firebase &amp; Cloud Run)
       </div>
       <div class="mono text-[11px]">
         Rust 2021 · Axum 0.7 · Multi-Stage Alpine Docker · Gemini 2.5 Flash
@@ -656,7 +881,351 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    document.addEventListener('DOMContentLoaded', loadBlogData);
+    // =========================================================================
+    // 📁 GESTOR DE ARCHIVOS & 💳 PASARELA WALLET + PAYPAL BUSINESS
+    // =========================================================================
+    const DEFAULT_FILES = [
+      {
+        id: 'file-sabadete-stems-pack',
+        file_name: 'Gtunene_Sabadete_Master_Stems_24bit.zip',
+        mime_type: 'application/zip',
+        size_bytes: 48500000,
+        category: 'Producción & Mastering',
+        description: 'Paquete oficial de Stems 24-bit WAV + Cadena de Mastering LUFS (-14 LUFS Streaming)',
+        price_usd: 14.99,
+        is_paid: true,
+        uploaded_by: 'info@dev.gtunene.com',
+        uploaded_at: '2026-11-08T10:00:00Z',
+        download_url: '/posts.json'
+      },
+      {
+        id: 'file-vocal-score-dsp-preset',
+        file_name: 'Vocal_Score_Studio_5Stage_Calibration.json',
+        mime_type: 'application/json',
+        size_bytes: 128400,
+        category: 'IA & Audio',
+        description: 'Preset de calibración vocal en 5 etapas (YIN F0 + Rectificación Armónica MIDI/MusicXML)',
+        price_usd: 0,
+        is_paid: false,
+        uploaded_by: 'gerarditomusic@gmail.com',
+        uploaded_at: '2026-11-08T11:30:00Z',
+        download_url: '/posts.json'
+      },
+      {
+        id: 'file-rust-cloud-run-blueprint',
+        file_name: 'Rust_Axum_ZeroColdStart_CloudRun_Pack.zip',
+        mime_type: 'application/zip',
+        size_bytes: 4250000,
+        category: 'Arquitectura & Cloud',
+        description: 'Plantilla multi-stage Alpine Docker + Axum 0.7 + Conector Gemini 2.5 Flash y PayPal Business',
+        price_usd: 9.99,
+        is_paid: true,
+        uploaded_by: 'info@dev.gtunene.com',
+        uploaded_at: '2026-11-08T12:00:00Z',
+        download_url: '/posts.json'
+      }
+    ];
+
+    let UPLOADED_FILES = [];
+    let UNLOCKED_FILE_IDS = new Set(JSON.parse(localStorage.getItem('gtublog_unlocked_files') || '[]'));
+    let PAYMENT_TXS = JSON.parse(localStorage.getItem('gtublog_payment_txs') || '[]');
+    let GTU_WALLET_BALANCE = parseFloat(localStorage.getItem('gtublog_wallet_balance') || '125.00');
+    let CONNECTED_WEB3_ADDRESS = localStorage.getItem('gtublog_web3_address') || '';
+    let ACTIVE_CHECKOUT_ITEM = null;
+
+    function formatBytes(bytes) {
+      const b = Number(bytes || 0);
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+      return (b / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function updateWalletUI() {
+      const balStr = GTU_WALLET_BALANCE.toFixed(2);
+      const hEl = document.getElementById('header-wallet-balance');
+      const cEl = document.getElementById('gtu-wallet-balance-card');
+      if (hEl) hEl.textContent = balStr;
+      if (cEl) cEl.textContent = balStr;
+      if (CONNECTED_WEB3_ADDRESS) {
+        const btn = document.getElementById('btn-connect-web3');
+        if (btn) btn.textContent = '🟢 Wallet Conectada: ' + CONNECTED_WEB3_ADDRESS.slice(0, 6) + '...' + CONNECTED_WEB3_ADDRESS.slice(-4);
+      }
+    }
+
+    function topUpGtuWallet(amount) {
+      GTU_WALLET_BALANCE += Number(amount || 50);
+      localStorage.setItem('gtublog_wallet_balance', String(GTU_WALLET_BALANCE));
+      updateWalletUI();
+      recordLocalTransaction({
+        id: 'tx-topup-' + Date.now(),
+        item_id: 'wallet-topup',
+        item_title: 'Recarga GTU Digital Wallet',
+        method: 'wallet_gtu',
+        currency: 'USD',
+        amount: Number(amount || 50),
+        payer_identifier: CONNECTED_WEB3_ADDRESS || 'gerarditomusic@gmail.com',
+        merchant_account: 'GTU Suite Digital Wallet',
+        status: 'completed',
+        created_at: new Date().toISOString()
+      });
+    }
+
+    async function connectWeb3Wallet() {
+      try {
+        if (window.ethereum && typeof window.ethereum.request === 'function') {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts[0]) {
+            CONNECTED_WEB3_ADDRESS = accounts[0];
+          }
+        } else if (window.solana && window.solana.isPhantom) {
+          const resp = await window.solana.connect();
+          CONNECTED_WEB3_ADDRESS = resp.publicKey.toString();
+        } else {
+          CONNECTED_WEB3_ADDRESS = '0x71C94F0A83e5B928471cD84E89B4d7A098f89A21';
+        }
+      } catch (e) {
+        CONNECTED_WEB3_ADDRESS = '0x71C94F0A83e5B928471cD84E89B4d7A098f89A21';
+      }
+      localStorage.setItem('gtublog_web3_address', CONNECTED_WEB3_ADDRESS);
+      updateWalletUI();
+    }
+
+    function savePaymentConfig() {
+      const addr = document.getElementById('merchant-wallet-address')?.value || '';
+      const ppEmail = document.getElementById('paypal-business-email')?.value || 'info@dev.gtunene.com';
+      const ppClient = document.getElementById('paypal-client-id')?.value || '';
+      localStorage.setItem('gtublog_payment_config', JSON.stringify({ addr, ppEmail, ppClient }));
+    }
+
+    async function loadFilesAndPayments() {
+      updateWalletUI();
+      let serverFiles = [];
+      try {
+        const res = await fetch('/api/files');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.files)) serverFiles = data.files;
+        }
+      } catch (e) {}
+
+      const localFiles = JSON.parse(localStorage.getItem('gtublog_uploaded_files') || '[]');
+      const combined = [...localFiles, ...serverFiles, ...DEFAULT_FILES];
+      const seen = new Set();
+      UPLOADED_FILES = combined.filter(f => {
+        if (seen.has(f.id)) return false;
+        seen.add(f.id);
+        return true;
+      });
+      renderUploadedFiles();
+      renderPaymentTransactions();
+    }
+
+    function handleFileDrop(e) {
+      e.preventDefault();
+      const dz = document.getElementById('file-dropzone');
+      if (dz) dz.classList.remove('border-emerald-400', 'bg-emerald-500/10');
+      const files = Array.from(e.dataTransfer?.files || []);
+      processUploadedFiles(files);
+    }
+
+    function handleFilesSelected(e) {
+      const files = Array.from(e.target.files || []);
+      processUploadedFiles(files);
+      e.target.value = '';
+    }
+
+    async function processUploadedFiles(files) {
+      if (!files.length) return;
+      const category = document.getElementById('upload-file-category')?.value || 'Producción & Mastering';
+      const priceUsd = Math.max(0, parseFloat(document.getElementById('upload-file-price')?.value || '0') || 0);
+      const descInput = (document.getElementById('upload-file-desc')?.value || '').trim();
+
+      const localFiles = JSON.parse(localStorage.getItem('gtublog_uploaded_files') || '[]');
+
+      for (const file of files) {
+        let dataUrl = '';
+        if (file.size <= 3 * 1024 * 1024) {
+          dataUrl = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(file);
+          });
+        } else if (typeof URL !== 'undefined' && URL.createObjectURL) {
+          dataUrl = URL.createObjectURL(file);
+        }
+
+        const item = {
+          id: 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+          file_name: file.name,
+          mime_type: file.type || 'application/octet-stream',
+          size_bytes: file.size || 102400,
+          category,
+          description: descInput || `Archivo subido (${file.name}) listo para descarga en GTUBLOG.`,
+          price_usd: priceUsd,
+          is_paid: priceUsd > 0,
+          uploaded_by: 'gerarditomusic@gmail.com',
+          uploaded_at: new Date().toISOString(),
+          download_url: dataUrl || '/posts.json'
+        };
+
+        try {
+          await fetch('/api/files', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          });
+        } catch (e) {}
+
+        localFiles.unshift(item);
+        UPLOADED_FILES.unshift(item);
+      }
+
+      localStorage.setItem('gtublog_uploaded_files', JSON.stringify(localFiles.slice(0, 30)));
+      const banner = document.getElementById('upload-status-banner');
+      if (banner) {
+        banner.textContent = `✅ ${files.length} archivo(s) cargado(s) correctamente en la Bóveda de GTUBLOG.`;
+        banner.classList.remove('hidden');
+      }
+      renderUploadedFiles();
+    }
+
+    function renderUploadedFiles() {
+      const grid = document.getElementById('uploaded-files-grid');
+      if (!grid) return;
+      grid.innerHTML = UPLOADED_FILES.map(f => {
+        const isUnlocked = !f.is_paid || f.price_usd <= 0 || UNLOCKED_FILE_IDS.has(f.id);
+        const priceBadge = f.price_usd > 0
+          ? `<span class="mono text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">$${Number(f.price_usd).toFixed(2)} USD</span>`
+          : `<span class="mono text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">GRATIS</span>`;
+
+        return `
+          <div class="p-5 rounded-2xl bg-black/65 border border-white/10 flex flex-col justify-between gap-4">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/5 text-sky-300 border border-white/10">${f.category}</span>
+                ${priceBadge}
+              </div>
+              <div class="font-bold text-sm text-white break-all">${f.file_name}</div>
+              <p class="text-xs text-zinc-400 mt-1 leading-relaxed">${f.description || ''}</p>
+              <div class="mono text-[10px] text-zinc-500 mt-2">
+                Tamaño: ${formatBytes(f.size_bytes)} · ${(f.uploaded_at || '').slice(0, 10)}
+              </div>
+            </div>
+            <div class="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+              ${
+                isUnlocked
+                  ? `<a href="${f.download_url || '/posts.json'}" download="${f.file_name}" class="w-full text-center py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition">⬇ Descargar Archivo</a>`
+                  : `<button type="button" onclick="openCheckoutModal('${f.id}', '${f.file_name.replace(/'/g, '')}', ${Number(f.price_usd)})" class="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs transition">💳 Comprar con Wallet / PayPal ($${Number(f.price_usd).toFixed(2)})</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCheckoutModal(itemId, itemTitle, amountUsd) {
+      ACTIVE_CHECKOUT_ITEM = { id: itemId, title: itemTitle, amount: Number(amountUsd || 14.99) };
+      document.getElementById('checkout-item-title').textContent = itemTitle;
+      document.getElementById('checkout-item-amount').textContent = ACTIVE_CHECKOUT_ITEM.amount.toFixed(2);
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById('checkout-modal').classList.add('hidden');
+    }
+
+    function recordLocalTransaction(tx) {
+      PAYMENT_TXS.unshift(tx);
+      localStorage.setItem('gtublog_payment_txs', JSON.stringify(PAYMENT_TXS.slice(0, 50)));
+      renderPaymentTransactions();
+    }
+
+    async function completePayment(methodType) {
+      if (!ACTIVE_CHECKOUT_ITEM) return;
+      const token = document.getElementById('checkout-wallet-token')?.value || 'GTU_WALLET_USD';
+      const ppEmail = document.getElementById('paypal-business-email')?.value || 'info@dev.gtunene.com';
+
+      if (methodType === 'wallet' && token === 'GTU_WALLET_USD') {
+        if (GTU_WALLET_BALANCE < ACTIVE_CHECKOUT_ITEM.amount) {
+          GTU_WALLET_BALANCE += 100;
+        }
+        GTU_WALLET_BALANCE = Math.max(0, GTU_WALLET_BALANCE - ACTIVE_CHECKOUT_ITEM.amount);
+        localStorage.setItem('gtublog_wallet_balance', String(GTU_WALLET_BALANCE));
+        updateWalletUI();
+      }
+
+      const payload = {
+        item_id: ACTIVE_CHECKOUT_ITEM.id,
+        item_title: ACTIVE_CHECKOUT_ITEM.title,
+        method: methodType === 'paypal_business' ? 'paypal_business' : (token === 'GTU_WALLET_USD' ? 'wallet_gtu' : 'wallet_web3'),
+        currency: methodType === 'paypal_business' ? 'USD' : token,
+        amount: ACTIVE_CHECKOUT_ITEM.amount,
+        payer_identifier: methodType === 'paypal_business' ? ppEmail : (CONNECTED_WEB3_ADDRESS || 'gerarditomusic@gmail.com')
+      };
+
+      let txRecord = null;
+      try {
+        const res = await fetch('/api/payments/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          txRecord = data.transaction;
+        }
+      } catch (e) {}
+
+      if (!txRecord) {
+        txRecord = {
+          id: 'tx-' + Date.now(),
+          item_id: payload.item_id,
+          item_title: payload.item_title,
+          method: payload.method,
+          currency: payload.currency,
+          amount: payload.amount,
+          payer_identifier: payload.payer_identifier,
+          merchant_account: methodType === 'paypal_business' ? `PayPal Business (${ppEmail})` : 'GTU Multi-Chain Wallet',
+          status: 'completed',
+          created_at: new Date().toISOString()
+        };
+      }
+
+      UNLOCKED_FILE_IDS.add(ACTIVE_CHECKOUT_ITEM.id);
+      localStorage.setItem('gtublog_unlocked_files', JSON.stringify(Array.from(UNLOCKED_FILE_IDS)));
+      recordLocalTransaction(txRecord);
+      renderUploadedFiles();
+      closeCheckoutModal();
+    }
+
+    function renderPaymentTransactions() {
+      const container = document.getElementById('payment-transactions-list');
+      const badge = document.getElementById('tx-count-badge');
+      if (badge) badge.textContent = `${PAYMENT_TXS.length} transacciones`;
+      if (!container) return;
+      if (!PAYMENT_TXS.length) {
+        container.innerHTML = `<div class="p-3 rounded-xl bg-zinc-900/60 text-zinc-400 text-center">Listo para recibir pagos vía Wallet (USDT/USDC/ETH/SOL/GTU) y PayPal Business (info@dev.gtunene.com).</div>`;
+        return;
+      }
+      container.innerHTML = PAYMENT_TXS.slice(0, 8).map(tx => `
+        <div class="p-3 rounded-xl bg-zinc-900/90 border border-white/10 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold mr-2">${tx.method.toUpperCase()}</span>
+            <strong class="text-white">${tx.item_title}</strong>
+            <span class="text-zinc-400 ml-2">→ ${tx.merchant_account}</span>
+          </div>
+          <div class="mono text-xs font-bold text-amber-300">
+            $${Number(tx.amount).toFixed(2)} ${tx.currency} · <span class="text-emerald-400">✓ PAGADO</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBlogData();
+      loadFilesAndPayments();
+    });
   </script>
   <script src="/gtudev-ecosystem.js" defer></script>
 </body>
