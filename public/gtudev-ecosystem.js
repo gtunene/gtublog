@@ -118,12 +118,139 @@
     waitlist: [],
     trash: {},
     currentUserEmail: null,
-    isAdminLoggedIn: false
+    isAdminLoggedIn: false,
+    isAuthorizedAppUser: false,
+    currentUserProfile: null,
+    assistantDrawerOpen: false
   };
+
+  const ALL_SUITE_APPS = [
+    { id: 'gtuprod', label: 'Gtuprod (Audio & Revisiones)' },
+    { id: 'hub', label: 'GTUDEV Hub' },
+    { id: 'vocal', label: 'Gtuscore (Partituras)' },
+    { id: 'promo', label: 'Gtupromo (Promo Agent)' },
+    { id: 'smm', label: 'Gtusocial (SMM)' },
+    { id: 'creator', label: 'Gtucreator (AI Video)' },
+    { id: 'gtublog', label: 'Gtublog' }
+  ];
+
+  const DEFAULT_USER_PERMISSIONS = {
+    canListen: true,
+    canComment: true,
+    canCreateArtistProfile: true,
+    canUpload: false,
+    canSignSplitsheet: true,
+    canEditMetadata: false,
+    canDelete: false
+  };
+
+  const ADMIN_FULL_PERMISSIONS = {
+    canListen: true,
+    canComment: true,
+    canCreateArtistProfile: true,
+    canUpload: true,
+    canSignSplitsheet: true,
+    canEditMetadata: true,
+    canDelete: true
+  };
+
+  function loadCachedAclUsers() {
+    try {
+      if (typeof localStorage === 'undefined') return {};
+      const raw = localStorage.getItem('gtudev_acl_users_cache');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    return {};
+  }
+
+  function saveCachedAclUsers(usersMap) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem('gtudev_acl_users_cache', JSON.stringify(usersMap || {}));
+    } catch (e) {}
+  }
+
+  STATE.users = loadCachedAclUsers();
 
   function checkIsAdminEmail(email) {
     if (!email) return false;
     return ADMIN_EMAILS.includes(String(email).trim().toLowerCase());
+  }
+
+  function normalizeUserRecord(u, fallbackEmail) {
+    const cleanEmail = String((u && u.email) || fallbackEmail || '').trim().toLowerCase();
+    const isRoot = checkIsAdminEmail(cleanEmail);
+    const allowedApps = isRoot
+      ? ALL_SUITE_APPS.map((a) => a.id)
+      : Array.isArray(u && u.allowedApps) && u.allowedApps.length
+      ? u.allowedApps
+      : ['gtuprod'];
+    const permissions = isRoot
+      ? Object.assign({}, ADMIN_FULL_PERMISSIONS)
+      : Object.assign({}, DEFAULT_USER_PERMISSIONS, (u && u.permissions) || {});
+    return {
+      email: cleanEmail,
+      name: (u && (u.name || u.artisticName)) || (cleanEmail ? cleanEmail.split('@')[0] : 'Artista'),
+      artisticName: (u && (u.artisticName || u.name)) || (cleanEmail ? cleanEmail.split('@')[0] : 'Artista'),
+      role: isRoot ? 'admin' : ((u && u.role) || 'artist'),
+      authorized: isRoot ? true : Boolean(u && u.authorized !== false),
+      isBanned: isRoot ? false : Boolean(u && u.isBanned),
+      allowedApps,
+      permissions,
+      inviteCode: (u && u.inviteCode) || ('GTU-' + Math.abs(cleanEmail.split('').reduce((a, c) => ((a << 5) - a) + c.charCodeAt(0), 0) % 9000 + 1000)),
+      updatedAt: (u && u.updatedAt) || new Date().toISOString()
+    };
+  }
+
+  function canUserAccessApp(userRecord, appId) {
+    if (!userRecord || !userRecord.email) return false;
+    if (checkIsAdminEmail(userRecord.email)) return true;
+    if (userRecord.isBanned || !userRecord.authorized) return false;
+    const targetApp = appId || APP_CTX.id;
+    const apps = Array.isArray(userRecord.allowedApps) ? userRecord.allowedApps : ['gtuprod'];
+    return apps.includes(targetApp);
+  }
+
+  function generateInviteToken(userRecord) {
+    try {
+      if (typeof btoa !== 'function') return '';
+      const norm = normalizeUserRecord(userRecord);
+      const payload = JSON.stringify({
+        aud: 'gtudev_invite',
+        email: norm.email,
+        name: norm.name,
+        artisticName: norm.artisticName,
+        role: norm.role,
+        allowedApps: norm.allowedApps,
+        permissions: norm.permissions,
+        inviteCode: norm.inviteCode,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 86400 * 90
+      });
+      const b64 = btoa(unescape(encodeURIComponent(payload))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return 'gtuinv.' + b64 + '.v1';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function parseInviteToken(tok) {
+    try {
+      if (!tok || typeof atob !== 'function') return null;
+      const parts = String(tok).trim().split('.');
+      if (parts.length !== 3 || parts[0] !== 'gtuinv') return null;
+      let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      const jsonStr = decodeURIComponent(escape(atob(b64)));
+      const data = JSON.parse(jsonStr);
+      if (!data || data.aud !== 'gtudev_invite' || !data.email) return null;
+      return normalizeUserRecord(data, data.email);
+    } catch (e) {
+      return null;
+    }
   }
 
   function escapeHtml(str) {
@@ -189,16 +316,39 @@
   window.GTUDEV_ECOSYSTEM = {
     appContext: APP_CTX,
     state: STATE,
+    allSuiteApps: ALL_SUITE_APPS,
+    defaultPermissions: DEFAULT_USER_PERMISSIONS,
     isAdmin: function (email) {
       return checkIsAdminEmail(email || STATE.currentUserEmail);
     },
-    isAuthorizedUser: function (email) {
+    isAuthorizedUser: function (email, appId) {
       if (!email) return false;
       const clean = String(email).trim().toLowerCase();
-      const u = STATE.users[clean];
-      if (u && u.isBanned) return false;
       if (ADMIN_EMAILS.includes(clean)) return true;
-      return Boolean(u && u.authorized === true);
+      const u = STATE.users[clean] ? normalizeUserRecord(STATE.users[clean], clean) : null;
+      if (!u) return false;
+      return canUserAccessApp(u, appId || APP_CTX.id);
+    },
+    getCurrentUser: function () {
+      if (STATE.currentUserProfile) return STATE.currentUserProfile;
+      if (STATE.currentUserEmail) {
+        const u = STATE.users[STATE.currentUserEmail];
+        return normalizeUserRecord(u, STATE.currentUserEmail);
+      }
+      return null;
+    },
+    canPerform: function (permKey) {
+      const profile = this.getCurrentUser();
+      if (!profile) return false;
+      if (checkIsAdminEmail(profile.email)) return true;
+      return Boolean(profile.permissions && profile.permissions[permKey]);
+    },
+    generateInviteLink: function (email, targetAppUrl) {
+      const clean = String(email || '').trim().toLowerCase();
+      const u = STATE.users[clean] ? normalizeUserRecord(STATE.users[clean], clean) : normalizeUserRecord({ email: clean }, clean);
+      const tok = generateInviteToken(u);
+      const base = targetAppUrl || 'https://gtuprod-suite.web.app/';
+      return base + (base.includes('?') ? '&' : '?') + 'gtu_invite=' + encodeURIComponent(tok);
     },
     isAgentPaused: function (agentId) {
       const id = agentId || APP_CTX.id;
@@ -308,10 +458,35 @@
     } catch (e) {}
   }
 
+  function persistInvitedUserSession(userRecord) {
+    try {
+      if (!userRecord || !userRecord.email || typeof localStorage === 'undefined') return;
+      const norm = normalizeUserRecord(userRecord, userRecord.email);
+      STATE.users[norm.email] = norm;
+      saveCachedAclUsers(STATE.users);
+      localStorage.setItem('gtudev_invited_user_session', JSON.stringify(norm));
+    } catch (e) {}
+  }
+
+  function getPersistedInvitedUserSession() {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      const raw = localStorage.getItem('gtudev_invited_user_session');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.email) return null;
+      const latest = STATE.users[parsed.email.toLowerCase()] || parsed;
+      return normalizeUserRecord(latest, parsed.email);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function clearVerifiedAdminEmail() {
     try {
       if (typeof localStorage === 'undefined') return;
       localStorage.removeItem('gtudev_verified_admin_email');
+      localStorage.removeItem('gtudev_invited_user_session');
       localStorage.removeItem('gtudev_smm_admin_email');
       localStorage.removeItem('gtudev_handoff_session');
       localStorage.removeItem('gtudev_sso_token');
@@ -324,21 +499,48 @@
     } catch (e) {}
   }
 
+  function broadcastCurrentUser(profile) {
+    try {
+      window.GTUDEV_CURRENT_USER = profile;
+      if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('gtudev:user-changed', { detail: profile }));
+      }
+    } catch (e) {}
+  }
+
   function updateAdminVisibility() {
     let email = null;
+    let invitedSession = null;
     try {
-      if (typeof window.location !== 'undefined' && window.location.search && (window.location.search.includes('token=') || window.location.search.includes('gtusso='))) {
+      if (typeof window.location !== 'undefined' && window.location.search) {
         const sp = new URLSearchParams(window.location.search);
-        const tok = sp.get('token') || sp.get('gtusso') || '';
-        const parts = tok.split('.');
-        if (parts.length === 3 && typeof atob === 'function') {
-          let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-          while (b64.length % 4) b64 += '=';
-          const payload = JSON.parse(atob(b64));
-          if (payload && (payload.aud === 'gtudev' || parts[0] === 'gtusso') && payload.email && checkIsAdminEmail(payload.email)) {
-            persistVerifiedAdminEmail(payload.email, tok);
-            sp.delete('token');
-            sp.delete('gtusso');
+        // 1. Check Master Admin SSO Token
+        if (sp.has('token') || sp.has('gtusso')) {
+          const tok = sp.get('token') || sp.get('gtusso') || '';
+          const parts = tok.split('.');
+          if (parts.length === 3 && typeof atob === 'function') {
+            let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const payload = JSON.parse(atob(b64));
+            if (payload && (payload.aud === 'gtudev' || parts[0] === 'gtusso') && payload.email && checkIsAdminEmail(payload.email)) {
+              persistVerifiedAdminEmail(payload.email, tok);
+              sp.delete('token');
+              sp.delete('gtusso');
+              const cleanQs = sp.toString();
+              const cleanUrl = window.location.pathname + (cleanQs ? '?' + cleanQs : '') + (window.location.hash || '');
+              if (window.history && typeof window.history.replaceState === 'function') {
+                window.history.replaceState({}, document.title, cleanUrl);
+              }
+            }
+          }
+        }
+        // 2. Check Magic Invitation Token (?gtu_invite=...)
+        if (sp.has('gtu_invite')) {
+          const invTok = sp.get('gtu_invite') || '';
+          const invUser = parseInviteToken(invTok);
+          if (invUser && invUser.email) {
+            persistInvitedUserSession(invUser);
+            sp.delete('gtu_invite');
             const cleanQs = sp.toString();
             const cleanUrl = window.location.pathname + (cleanQs ? '?' + cleanQs : '') + (window.location.hash || '');
             if (window.history && typeof window.history.replaceState === 'function') {
@@ -357,16 +559,45 @@
           email = String(directAdmin).trim().toLowerCase();
         }
       }
+      invitedSession = getPersistedInvitedUserSession();
+      if (!email && invitedSession && invitedSession.email) {
+        email = invitedSession.email;
+      }
     } catch (e) {}
 
     STATE.currentUserEmail = email;
     STATE.isAdminLoggedIn = checkIsAdminEmail(email);
 
+    let activeProfile = null;
+    if (STATE.isAdminLoggedIn && email) {
+      activeProfile = normalizeUserRecord({ email, role: 'admin', name: email.startsWith('gerardito') ? 'Gerardo (Admin)' : 'Gtunene (Admin)' }, email);
+      STATE.isAuthorizedAppUser = true;
+    } else if (email) {
+      const candidate = STATE.users[email]
+        ? normalizeUserRecord(STATE.users[email], email)
+        : invitedSession && invitedSession.email === email
+        ? normalizeUserRecord(invitedSession, email)
+        : null;
+      if (candidate && canUserAccessApp(candidate, APP_CTX.id)) {
+        activeProfile = candidate;
+        STATE.isAuthorizedAppUser = true;
+      } else {
+        STATE.isAuthorizedAppUser = false;
+      }
+    } else {
+      STATE.isAuthorizedAppUser = false;
+    }
+
+    STATE.currentUserProfile = activeProfile;
+    broadcastCurrentUser(activeProfile);
+
+    const isVerifiedForCurrentApp = Boolean(STATE.isAdminLoggedIn || STATE.isAuthorizedAppUser);
+
     try {
       if (document.documentElement) {
-        if (STATE.isAdminLoggedIn && typeof document.documentElement.setAttribute === 'function') {
+        if (isVerifiedForCurrentApp && typeof document.documentElement.setAttribute === 'function') {
           document.documentElement.setAttribute('data-gtudev-auth', 'verified');
-        } else if (!STATE.isAdminLoggedIn && typeof document.documentElement.removeAttribute === 'function') {
+        } else if (!isVerifiedForCurrentApp && typeof document.documentElement.removeAttribute === 'function') {
           document.documentElement.removeAttribute('data-gtudev-auth');
         }
       }
@@ -391,15 +622,82 @@
       floatingAdminPill.style.display = STATE.isAdminLoggedIn ? 'inline-flex' : 'none';
     }
     if (ucShield) {
-      ucShield.style.display = STATE.isAdminLoggedIn ? 'none' : 'flex';
+      ucShield.style.display = isVerifiedForCurrentApp ? 'none' : 'flex';
     }
     if (floatingStack) {
-      floatingStack.style.display = STATE.isAdminLoggedIn ? 'flex' : 'none';
+      floatingStack.style.display = isVerifiedForCurrentApp ? 'flex' : 'none';
     }
     if (backSuiteBtn) {
       backSuiteBtn.style.display = (STATE.isAdminLoggedIn && APP_CTX.id !== 'hub') ? 'inline-flex' : 'none';
     }
   }
+
+  window.gtudevSignInWithInviteCode = async function () {
+    const emailEl = document.getElementById('gtudev-uc-invite-email');
+    const codeEl = document.getElementById('gtudev-uc-invite-code');
+    const statusEl = document.getElementById('gtudev-uc-status');
+    const setStatus = (msg, isErr) => {
+      if (!statusEl) return;
+      statusEl.style.display = 'block';
+      statusEl.style.color = isErr ? '#fca5a5' : '#7dd3fc';
+      statusEl.style.borderColor = isErr ? 'rgba(239,68,68,0.4)' : 'rgba(14,165,233,0.4)';
+      statusEl.style.background = isErr ? 'rgba(239,68,68,0.12)' : 'rgba(14,165,233,0.12)';
+      statusEl.textContent = msg;
+    };
+
+    const cleanEmail = String((emailEl && emailEl.value) || '').trim().toLowerCase();
+    const cleanCode = String((codeEl && codeEl.value) || '').trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setStatus('Ingresa el correo electrónico de tu invitación.', true);
+      return;
+    }
+
+    // If the user pasted a full ?gtu_invite= token or URL into the code field, parse it directly!
+    if (cleanCode.includes('gtuinv.')) {
+      const match = cleanCode.match(/gtuinv\.[A-Za-z0-9_-]+\.v1/);
+      const parsed = match ? parseInviteToken(match[0]) : null;
+      if (parsed && parsed.email === cleanEmail) {
+        if (!canUserAccessApp(parsed, APP_CTX.id)) {
+          setStatus(`⛔ Tu invitación solo permite entrar a: ${(parsed.allowedApps || ['gtuprod']).join(', ')}.`, true);
+          return;
+        }
+        persistInvitedUserSession(parsed);
+        setStatus(`✅ Bienvenido/a ${parsed.artisticName || parsed.name}. Entrando a ${APP_CTX.name}...`, false);
+        updateAdminVisibility();
+        return;
+      }
+    }
+
+    // Check Firestore or local STATE.users
+    try {
+      const db = getFirestore();
+      if (db) {
+        const docSnap = await db.collection('ecosystem_users').doc(cleanEmail).get();
+        if (docSnap && docSnap.exists) {
+          STATE.users[cleanEmail] = Object.assign({ id: docSnap.id }, docSnap.data());
+          saveCachedAclUsers(STATE.users);
+        }
+      }
+    } catch (e) {}
+
+    const userRec = STATE.users[cleanEmail] ? normalizeUserRecord(STATE.users[cleanEmail], cleanEmail) : null;
+    if (!userRec || !userRec.authorized || userRec.isBanned) {
+      setStatus('⛔ Este correo no tiene una invitación activa. Solicítala al administrador en GTUDEV.', true);
+      return;
+    }
+    if (cleanCode && userRec.inviteCode && cleanCode.toUpperCase() !== userRec.inviteCode.toUpperCase()) {
+      setStatus('⛔ El código de invitación no coincide.', true);
+      return;
+    }
+    if (!canUserAccessApp(userRec, APP_CTX.id)) {
+      setStatus(`⛔ Tu cuenta tiene acceso autorizado únicamente a: ${(userRec.allowedApps || ['gtuprod']).join(', ')}.`, true);
+      return;
+    }
+
+    persistInvitedUserSession(userRec);
+    setStatus(`✅ Acceso concedido como ${userRec.artisticName || userRec.name}.`, false);
+    updateAdminVisibility();
+  };
 
   window.gtudevSignInAdminGoogle = async function () {
     const statusEl = document.getElementById('gtudev-uc-status');
@@ -426,25 +724,50 @@
       provider.setCustomParameters({ prompt: 'select_account' });
       const cred = await authInstance.signInWithPopup(provider);
       const userEmail = cred && cred.user && cred.user.email ? cred.user.email.trim().toLowerCase() : '';
-      if (!checkIsAdminEmail(userEmail)) {
-        clearVerifiedAdminEmail();
-        await authInstance.signOut().catch(() => {});
-        setStatus('⛔ Acceso denegado. Cuenta no autorizada.', true);
-        if (btnEl) btnEl.disabled = false;
+      if (checkIsAdminEmail(userEmail)) {
+        persistVerifiedAdminEmail(userEmail);
+        setStatus('✅ Acceso de Administrador verificado.', false);
+        updateAdminVisibility();
+        if (window.__GTUDEV_HANDOFF_URL__ && cred.user && typeof cred.user.getIdToken === 'function') {
+          const idTok = await cred.user.getIdToken();
+          window.location.replace(window.__GTUDEV_HANDOFF_URL__ + '?token=' + encodeURIComponent(idTok));
+          return;
+        }
+        if (typeof window.unlockSmmDashboard === 'function') {
+          try { window.unlockSmmDashboard(userEmail, cred.user.photoURL); } catch (e) {}
+        }
+        return;
+      }
+
+      // Check if this Google user is an invited user authorized for this app (e.g. Gtuprod)
+      try {
+        const db = getFirestore();
+        if (db && userEmail) {
+          const snap = await db.collection('ecosystem_users').doc(userEmail).get();
+          if (snap && snap.exists) {
+            STATE.users[userEmail] = Object.assign({ id: snap.id }, snap.data());
+            saveCachedAclUsers(STATE.users);
+          }
+        }
+      } catch (e) {}
+
+      const invitedRec = userEmail && STATE.users[userEmail] ? normalizeUserRecord(STATE.users[userEmail], userEmail) : null;
+      if (invitedRec && canUserAccessApp(invitedRec, APP_CTX.id)) {
+        persistInvitedUserSession(invitedRec);
+        setStatus(`✅ Acceso autorizado para ${invitedRec.artisticName || invitedRec.name} en ${APP_CTX.name}.`, false);
         updateAdminVisibility();
         return;
       }
-      persistVerifiedAdminEmail(userEmail);
-      setStatus('✅ Acceso verificado.', false);
+
+      clearVerifiedAdminEmail();
+      await authInstance.signOut().catch(() => {});
+      if (invitedRec && invitedRec.authorized && !invitedRec.isBanned) {
+        setStatus(`⛔ Tu cuenta (${userEmail}) solo tiene acceso autorizado a: ${(invitedRec.allowedApps || ['gtuprod']).join(', ')}.`, true);
+      } else {
+        setStatus('⛔ Acceso denegado. Cuenta no autorizada por el administrador en GTUDEV.', true);
+      }
+      if (btnEl) btnEl.disabled = false;
       updateAdminVisibility();
-      if (window.__GTUDEV_HANDOFF_URL__ && cred.user && typeof cred.user.getIdToken === 'function') {
-        const idTok = await cred.user.getIdToken();
-        window.location.replace(window.__GTUDEV_HANDOFF_URL__ + '?token=' + encodeURIComponent(idTok));
-        return;
-      }
-      if (typeof window.unlockSmmDashboard === 'function') {
-        try { window.unlockSmmDashboard(userEmail, cred.user.photoURL); } catch (e) {}
-      }
     } catch (err) {
       const code = err && err.code ? String(err.code) : '';
       if (code === 'auth/popup-blocked' && window.firebase && window.firebase.auth) {
@@ -467,6 +790,8 @@
     } catch (e) {}
     STATE.currentUserEmail = null;
     STATE.isAdminLoggedIn = false;
+    STATE.isAuthorizedAppUser = false;
+    STATE.currentUserProfile = null;
     updateAdminVisibility();
     if (window.location && typeof window.location.reload === 'function') {
       window.location.reload();
@@ -614,25 +939,72 @@
       }
       #gtudev-floating-stack {
         position: fixed;
-        bottom: 84px;
-        right: 16px;
+        bottom: 92px;
+        right: 0;
         z-index: 99999;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+        transform: translateX(calc(100% - 28px));
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #gtudev-floating-stack.drawer-open {
+        transform: translateX(0);
+      }
+      #gtudev-edge-pull-tab {
+        width: 28px;
+        height: 64px;
+        border-radius: 14px 0 0 14px;
+        background: rgba(20, 20, 22, 0.92);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-right: none;
+        color: #a1a1aa;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        cursor: pointer;
+        box-shadow: -6px 8px 24px rgba(0, 0, 0, 0.55);
+        font-size: 11px;
+        font-weight: 700;
+        user-select: none;
+        transition: background 0.2s, color 0.2s;
+      }
+      #gtudev-edge-pull-tab:hover {
+        background: rgba(36, 36, 40, 0.98);
+        color: #ffffff;
+      }
+      #gtudev-edge-pull-tab .pull-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #30d158;
+      }
+      #gtudev-floating-drawer-body {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px 8px 10px;
+        background: rgba(18, 18, 20, 0.95);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: -12px 14px 36px rgba(0, 0, 0, 0.65);
       }
       @media (max-width: 768px) {
         #gtudev-floating-stack {
           bottom: 112px;
-          right: 8px;
-          gap: 6px;
+          right: 0;
         }
         #gtudev-chat-fab {
           height: 36px !important;
           padding: 0 11px !important;
           font-size: 11.5px !important;
-          opacity: 0.9;
         }
         #gtudev-floating-admin-pill {
           height: 34px !important;
@@ -970,7 +1342,7 @@
         color: #ffffff;
       }
       @media (max-width: 768px) {
-        #gtudev-floating-stack { bottom: 78px !important; right: 12px !important; gap: 6px !important; }
+        #gtudev-floating-stack { bottom: 78px !important; right: 0 !important; gap: 0 !important; }
         #gtudev-chat-fab, #gtudev-floating-admin-pill, #gtudev-back-to-suite-btn { height: 36px !important; padding: 0 12px !important; font-size: 12px !important; }
       }
     `;
@@ -983,16 +1355,28 @@
     const ucShield = document.createElement('div');
     ucShield.id = 'gtudev-under-construction-shield';
     ucShield.innerHTML = `
-      <div class="gtu-uc-card">
-        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;">🔒</div>
-        <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:0 0 22px;color:#ffffff;">
-          Iniciar Sesión
+      <div class="gtu-uc-card" style="max-width:420px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;">🔒</div>
+        <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:0 0 6px;color:#ffffff;">
+          Iniciar Sesión · ${APP_CTX.name}
         </h1>
+        <p style="font-size:12.5px;color:#94a3b8;margin:0 0 18px;line-height:1.45;">
+          ${APP_CTX.id === 'gtuprod' ? 'Acceso para Administradores y Artistas/Usuarios invitados por el Panel Admin de GTUDEV.' : 'Acceso privado controlado desde el Panel Admin de GTUDEV.'}
+        </p>
         <div id="gtudev-uc-status" style="display:none;margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid rgba(14,165,233,0.4);font-size:12.5px;line-height:1.45;"></div>
         <button type="button" id="gtudev-uc-login-btn" class="gtu-uc-google-btn" onclick="window.gtudevSignInAdminGoogle()">
           <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
           Continuar con Google
         </button>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);text-align:left;">
+          <div style="font-size:11.5px;font-weight:600;color:#94a3b8;margin-bottom:8px;">🎟️ Acceso con Invitación / Código de Artista</div>
+          <input type="email" id="gtudev-uc-invite-email" placeholder="Correo invitado (ej. artista@estudio.com)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 12px;color:#fff;font-size:12.5px;margin-bottom:8px;outline:none;" />
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="gtudev-uc-invite-code" placeholder="Código (ej. GTU-1234) o Link" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 12px;color:#fff;font-size:12.5px;outline:none;" />
+            <button type="button" onclick="window.gtudevSignInWithInviteCode()" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:0 14px;font-size:12.5px;font-weight:600;cursor:pointer;">Entrar</button>
+          </div>
+        </div>
       </div>
     `;
     document.body.appendChild(ucShield);
@@ -1019,18 +1403,43 @@
     const stack = document.createElement('div');
     stack.id = 'gtudev-floating-stack';
     stack.innerHTML = `
-      <a id="gtudev-back-to-suite-btn" href="https://gtudev-suite.web.app/" title="Volver al Hub de la Suite GTUDEV">
-        <span>⬅</span> <span>Volver a la Suite</span>
-      </a>
-      <button id="gtudev-floating-admin-pill" onclick="window.openGtudevAdminModal()" title="Abrir Panel de Administración">
-        <span>⚙️</span> <span>Admin</span>
+      <button type="button" id="gtudev-edge-pull-tab" title="Sacar / Esconder Asistente y Controles">
+        <span class="pull-dot"></span>
+        <span id="gtudev-edge-pull-arrow">◀</span>
       </button>
-      <button id="gtudev-chat-fab" title="Hablar con el asistente">
-        <span class="dot"></span>
-        <span>Asistente</span>
-      </button>
+      <div id="gtudev-floating-drawer-body">
+        <a id="gtudev-back-to-suite-btn" href="https://gtudev-suite.web.app/" title="Volver al Hub de la Suite GTUDEV">
+          <span>⬅</span> <span>Suite</span>
+        </a>
+        <button id="gtudev-floating-admin-pill" onclick="window.openGtudevAdminModal()" title="Abrir Panel de Administración">
+          <span>⚙️</span> <span>Admin</span>
+        </button>
+        <button id="gtudev-chat-fab" title="Hablar con el asistente">
+          <span class="dot"></span>
+          <span>Asistente</span>
+        </button>
+      </div>
     `;
     document.body.appendChild(stack);
+
+    const pullTab = document.getElementById('gtudev-edge-pull-tab');
+    const pullArrow = document.getElementById('gtudev-edge-pull-arrow');
+    window.toggleGtudevAssistantDrawer = function (forceState) {
+      const next = typeof forceState === 'boolean' ? forceState : !stack.classList.contains('drawer-open');
+      stack.classList.toggle('drawer-open', next);
+      STATE.assistantDrawerOpen = next;
+      if (pullArrow) pullArrow.textContent = next ? '▶' : '◀';
+      if (!next) {
+        const cw = document.getElementById('gtudev-chat-window');
+        if (cw) cw.classList.remove('open');
+      }
+    };
+    if (pullTab) {
+      pullTab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.toggleGtudevAssistantDrawer();
+      });
+    }
 
     try {
       const ssoFrame = document.createElement('iframe');
@@ -1085,32 +1494,82 @@
     const adminModal = document.createElement('div');
     adminModal.id = 'gtudev-admin-modal';
     adminModal.innerHTML = `
-      <div class="gtu-admin-card" onclick="event.stopPropagation()">
+      <div class="gtu-admin-card" onclick="event.stopPropagation()" style="max-width:960px;">
         <div class="gtu-admin-header">
           <div>
             <div style="font-size:17px;font-weight:700;letter-spacing:-0.01em;">Panel de Control Maestro · GTUDEV</div>
-            <div style="font-size:12px;color:#86868b;">Control total del ecosistema para gerarditomusic@gmail.com e info@dev.gtunene.com</div>
+            <div style="font-size:12px;color:#86868b;">Configura usuarios, invitaciones, a qué apps pueden entrar (ej. solo Gtuprod) y qué pueden hacer</div>
           </div>
           <button class="gtu-btn-sm" onclick="window.closeGtudevAdminModal()">Cerrar ✕</button>
         </div>
         <div class="gtu-admin-tabs">
-          <button class="gtu-admin-tab active" data-tab="users" onclick="window.switchGtudevAdminTab('users')">Usuarios y Permisos</button>
-          <button class="gtu-admin-tab" data-tab="waitlist" onclick="window.switchGtudevAdminTab('waitlist')">Waiting List</button>
+          <button class="gtu-admin-tab active" data-tab="users" onclick="window.switchGtudevAdminTab('users')">👥 Usuarios, Permisos, Invitaciones y Apps</button>
+          <button class="gtu-admin-tab" data-tab="waitlist" onclick="window.switchGtudevAdminTab('waitlist')">⏳ Waiting List</button>
           <button class="gtu-admin-tab" data-tab="trash" onclick="window.switchGtudevAdminTab('trash')">🗑️ Basurero</button>
-          <button class="gtu-admin-tab" data-tab="agents" onclick="window.switchGtudevAdminTab('agents')">Agentes, Modos y Promociones</button>
-          <button class="gtu-admin-tab" data-tab="cloud" onclick="window.switchGtudevAdminTab('cloud')">Bases de Datos & Cloud</button>
+          <button class="gtu-admin-tab" data-tab="agents" onclick="window.switchGtudevAdminTab('agents')">🤖 Agentes, Modos y Promociones</button>
+          <button class="gtu-admin-tab" data-tab="cloud" onclick="window.switchGtudevAdminTab('cloud')">☁️ Bases de Datos & Cloud</button>
         </div>
         <div class="gtu-admin-body">
           <div id="gtu-tab-users">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;background:rgba(255,255,255,0.03);padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);">
-              <input type="email" id="gtu-admin-new-email" placeholder="correo@usuario.com" style="flex:1;min-width:180px;background:#000;border:1px solid rgba(255,255,255,0.14);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;" />
-              <select id="gtu-admin-new-role" style="background:#000;border:1px solid rgba(255,255,255,0.14);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;">
-                <option value="beta_tester">Invitado Autorizado</option>
-                <option value="artist">Artista Invitado</option>
-                <option value="admin">Administrador</option>
-              </select>
-              <button class="gtu-btn-sm gtu-btn-success" onclick="window.gtudevGrantUser()">Dar Permiso</button>
-              <button class="gtu-btn-sm gtu-btn-danger" onclick="window.gtudevBanUserInput()">Banear</button>
+            <div style="margin-bottom:18px;background:rgba(255,255,255,0.03);padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,0.09);">
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:10px;color:#fff;">➕ Crear / Configurar Usuario e Invitación</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                <input type="email" id="gtu-admin-new-email" placeholder="Correo (ej. artista@estudio.com)" style="flex:1.2;min-width:180px;background:#000;border:1px solid rgba(255,255,255,0.14);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;" />
+                <input type="text" id="gtu-admin-new-name" placeholder="Nombre Artístico / Perfil (ej. Nova Voz)" style="flex:1;min-width:150px;background:#000;border:1px solid rgba(255,255,255,0.14);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;" />
+                <select id="gtu-admin-new-role" style="background:#000;border:1px solid rgba(255,255,255,0.14);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;">
+                  <option value="artist">🎤 Artista Invitado</option>
+                  <option value="producer">🎚️ Productor Musical</option>
+                  <option value="engineer">🎛️ Ingeniero Mezcla/Master</option>
+                  <option value="collaborator">✍️ Compositor / Split Sheet</option>
+                  <option value="viewer">🎧 Oyente / A&R</option>
+                  <option value="admin">👑 Administrador</option>
+                </select>
+              </div>
+
+              <div style="margin-bottom:10px;">
+                <div style="font-size:11.5px;font-weight:600;color:#94a3b8;margin-bottom:6px;">📱 ¿A qué aplicaciones puede entrar este usuario? (Por defecto: SOLO Gtuprod)</div>
+                <div id="gtu-admin-new-apps" style="display:flex;gap:8px;flex-wrap:wrap;">
+                  ${ALL_SUITE_APPS.map((app) => `
+                    <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                      <input type="checkbox" class="gtu-new-app-cb" value="${app.id}" ${app.id === 'gtuprod' ? 'checked' : ''} />
+                      <span>${app.label}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <div style="font-size:11.5px;font-weight:600;color:#94a3b8;margin-bottom:6px;">🛠️ ¿Qué puede hacer dentro de la aplicación (Permisos en Gtuprod)?</div>
+                <div id="gtu-admin-new-perms" style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canListen" checked /> 🎧 Escuchar temas
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canComment" checked /> 💬 Comentar / Revisiones (SoundCloud)
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canCreateArtistProfile" checked /> 🎤 Crear Perfil de Artista
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canSignSplitsheet" checked /> ✍️ Firmar Split Sheet
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canUpload" /> ⬆️ Subir Pistas / Versiones
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canEditMetadata" /> 📝 Editar Notas / Metadatos
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:12px;cursor:pointer;">
+                    <input type="checkbox" class="gtu-new-perm-cb" value="canDelete" /> 🗑️ Eliminar / Basurero
+                  </label>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="gtu-btn-sm gtu-btn-success" onclick="window.gtudevGrantUser()">✅ Guardar Usuario & Generar Invitación</button>
+                <button class="gtu-btn-sm gtu-btn-danger" onclick="window.gtudevBanUserInput()">🚫 Banear</button>
+                <span id="gtu-admin-invite-copied-msg" style="font-size:12px;color:#30d158;display:none;"></span>
+              </div>
             </div>
             <div id="gtu-admin-users-list"></div>
           </div>
@@ -1346,21 +1805,61 @@
     let html = '';
     allEmails.forEach((email) => {
       const isRoot = ADMIN_EMAILS.includes(email);
-      const u = STATE.users[email] || { email, role: isRoot ? 'admin' : 'visitor', authorized: isRoot, isBanned: false };
+      const u = normalizeUserRecord(STATE.users[email], email);
       const safeEmail = escapeHtml(email);
+      const safeName = escapeHtml(u.artisticName || u.name || email.split('@')[0]);
+      const safeCode = escapeHtml(u.inviteCode || '');
+      const apps = Array.isArray(u.allowedApps) ? u.allowedApps : ['gtuprod'];
+      const perms = u.permissions || DEFAULT_USER_PERMISSIONS;
+
+      const permLabels = [
+        { k: 'canListen', label: '🎧 Escuchar' },
+        { k: 'canComment', label: '💬 Comentar (SoundCloud)' },
+        { k: 'canCreateArtistProfile', label: '🎤 Crear Perfil Artista' },
+        { k: 'canSignSplitsheet', label: '✍️ Firmar Split' },
+        { k: 'canUpload', label: '⬆️ Subir Pistas' },
+        { k: 'canEditMetadata', label: '📝 Editar Notas' },
+        { k: 'canDelete', label: '🗑️ Eliminar' }
+      ];
+
       html += `
-        <div class="gtu-switch-row">
-          <div>
-            <div style="font-weight:600;font-size:13.5px;">${safeEmail}</div>
-            <div style="font-size:12px;color:#86868b;">${isRoot ? 'Administrador Principal' : (u.isBanned ? 'Baneado' : (u.authorized ? 'Autorizado' : 'Sin acceso'))}</div>
+        <div class="gtu-switch-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-weight:700;font-size:14px;color:#fff;">
+                ${safeName} · <span style="color:#64d2ff;font-weight:500;">${safeEmail}</span>
+              </div>
+              <div style="font-size:12px;color:#86868b;">
+                ${isRoot ? '👑 Administrador Maestro (Acceso Total a las 7 Apps)' : `Rol: ${escapeHtml(u.role)} · Estado: ${u.isBanned ? '🚫 Baneado' : (u.authorized ? '🟢 Autorizado' : '⚪ Sin acceso')} · Código Invitación: <code style="color:#ffd60a;">${safeCode}</code>`}
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${isRoot ? '<span class="gtu-btn-sm gtu-btn-success">Propietario</span>' : `
+                <button class="gtu-btn-sm gtu-btn-success" onclick="window.gtudevCopyInviteLink('${safeEmail}')" title="Copiar link directo de invitación a Gtuprod">🔗 Copiar Invitación</button>
+                <button class="gtu-btn-sm ${u.authorized ? '' : 'gtu-btn-success'}" onclick="window.gtudevSetUserState('${safeEmail}', ${!u.authorized}, false)">${u.authorized ? 'Pausar acceso' : 'Dar permiso'}</button>
+                <button class="gtu-btn-sm ${u.isBanned ? 'gtu-btn-success' : 'gtu-btn-danger'}" onclick="window.gtudevSetUserState('${safeEmail}', false, ${!u.isBanned})">${u.isBanned ? 'Desbanear' : 'Banear'}</button>
+                <button class="gtu-btn-sm" title="Enviar al Basurero" onclick="window.gtudevTrashUser('${safeEmail}', 'users')">🗑️</button>
+              `}
+            </div>
           </div>
-          <div style="display:flex;gap:6px;">
-            ${isRoot ? '<span class="gtu-btn-sm gtu-btn-success">Propietario</span>' : `
-              <button class="gtu-btn-sm ${u.authorized ? '' : 'gtu-btn-success'}" onclick="window.gtudevSetUserState('${safeEmail}', ${!u.authorized}, false)">${u.authorized ? 'Quitar permiso' : 'Dar permiso'}</button>
-              <button class="gtu-btn-sm ${u.isBanned ? 'gtu-btn-success' : 'gtu-btn-danger'}" onclick="window.gtudevSetUserState('${safeEmail}', false, ${!u.isBanned})">${u.isBanned ? 'Desbanear' : 'Banear'}</button>
-              <button class="gtu-btn-sm" title="Enviar al Basurero (Conservar para el futuro)" onclick="window.gtudevTrashUser('${safeEmail}', 'users')">🗑️</button>
-            `}
-          </div>
+          ${isRoot ? '' : `
+            <div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:11px;color:#94a3b8;font-weight:600;min-width:110px;">📱 Apps Permitidas:</span>
+                ${ALL_SUITE_APPS.map((app) => {
+                  const active = apps.includes(app.id);
+                  return `<button type="button" onclick="window.gtudevToggleUserApp('${safeEmail}', '${app.id}')" style="padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${active ? 'rgba(48,209,88,0.5)' : 'rgba(255,255,255,0.12)'};background:${active ? 'rgba(48,209,88,0.16)' : 'rgba(255,255,255,0.03)'};color:${active ? '#30d158' : '#86868b'};">${active ? '✓ ' : ''}${app.id === 'gtuprod' ? 'Gtuprod' : app.id}</button>`;
+                }).join('')}
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:11px;color:#94a3b8;font-weight:600;min-width:110px;">🛠️ ¿Qué puede hacer?:</span>
+                ${permLabels.map((p) => {
+                  const on = Boolean(perms[p.k]);
+                  return `<button type="button" onclick="window.gtudevToggleUserPerm('${safeEmail}', '${p.k}')" style="padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ${on ? 'rgba(56,189,248,0.5)' : 'rgba(255,255,255,0.12)'};background:${on ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.03)'};color:${on ? '#38bdf8' : '#86868b'};">${on ? '✓ ' : ''}${p.label}</button>`;
+                }).join('')}
+              </div>
+            </div>
+          `}
         </div>
       `;
     });
@@ -1386,7 +1885,7 @@
           <div style="font-size:12px;color:#86868b;">App: ${safeApp} · Rol: ${safeRole}</div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="gtu-btn-sm gtu-btn-success" onclick="window.gtudevApproveWaitlist('${safeEmail}')">Aprobar acceso</button>
+          <button class="gtu-btn-sm gtu-btn-success" onclick="window.gtudevApproveWaitlist('${safeEmail}')">Aprobar en Gtuprod</button>
           <button class="gtu-btn-sm gtu-btn-danger" onclick="window.gtudevSetUserState('${safeEmail}', false, true)">Banear</button>
           <button class="gtu-btn-sm" title="Mover al Basurero" onclick="window.gtudevTrashUser('${safeEmail}', 'waitlist')">🗑️</button>
         </div>
@@ -1457,31 +1956,95 @@
     }).join('');
   }
 
-  window.gtudevSetUserState = async function (email, authorized, isBanned, role) {
+  window.gtudevSetUserState = async function (email, authorized, isBanned, role, extraData) {
     const clean = String(email || '').trim().toLowerCase();
-    if (!clean || ADMIN_EMAILS.includes(clean)) return;
-    const payload = {
+    if (!clean || ADMIN_EMAILS.includes(clean)) return null;
+    const prev = STATE.users[clean] ? normalizeUserRecord(STATE.users[clean], clean) : normalizeUserRecord({ email: clean }, clean);
+    const payload = normalizeUserRecord(Object.assign({}, prev, extraData || {}, {
       email: clean,
       authorized: Boolean(authorized),
       isBanned: Boolean(isBanned),
-      role: role || (authorized ? 'beta_tester' : 'visitor'),
+      role: role || prev.role || 'artist',
       updatedAt: new Date().toISOString()
-    };
+    }), clean);
     STATE.users[clean] = payload;
+    saveCachedAclUsers(STATE.users);
     renderAdminUsersList();
     updateGlobalBanners();
     const db = getFirestore();
     if (db) {
-      await db.collection('ecosystem_users').doc(clean).set(payload, { merge: true });
+      await db.collection('ecosystem_users').doc(clean).set(payload, { merge: true }).catch(() => {});
     }
+    return payload;
   };
 
-  window.gtudevGrantUser = function () {
+  window.gtudevToggleUserApp = async function (email, appId) {
+    const clean = String(email || '').trim().toLowerCase();
+    if (!clean || ADMIN_EMAILS.includes(clean)) return;
+    const u = normalizeUserRecord(STATE.users[clean], clean);
+    const currentApps = Array.isArray(u.allowedApps) ? [...u.allowedApps] : ['gtuprod'];
+    const nextApps = currentApps.includes(appId)
+      ? currentApps.filter((id) => id !== appId)
+      : [...currentApps, appId];
+    await window.gtudevSetUserState(clean, u.authorized, u.isBanned, u.role, { allowedApps: nextApps.length ? nextApps : ['gtuprod'] });
+  };
+
+  window.gtudevToggleUserPerm = async function (email, permKey) {
+    const clean = String(email || '').trim().toLowerCase();
+    if (!clean || ADMIN_EMAILS.includes(clean)) return;
+    const u = normalizeUserRecord(STATE.users[clean], clean);
+    const nextPerms = Object.assign({}, DEFAULT_USER_PERMISSIONS, u.permissions || {});
+    nextPerms[permKey] = !nextPerms[permKey];
+    await window.gtudevSetUserState(clean, u.authorized, u.isBanned, u.role, { permissions: nextPerms });
+  };
+
+  window.gtudevCopyInviteLink = function (email) {
+    const clean = String(email || '').trim().toLowerCase();
+    if (!clean) return '';
+    const u = normalizeUserRecord(STATE.users[clean], clean);
+    const link = window.GTUDEV_ECOSYSTEM.generateInviteLink(clean, 'https://gtuprod-suite.web.app/');
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(link).catch(() => {});
+    }
+    const msgEl = document.getElementById('gtu-admin-invite-copied-msg');
+    if (msgEl) {
+      msgEl.style.display = 'inline';
+      msgEl.textContent = `✓ Invitación copiada para ${u.artisticName || clean} (Código: ${u.inviteCode})`;
+      setTimeout(() => { msgEl.style.display = 'none'; }, 5000);
+    }
+    return link;
+  };
+
+  window.gtudevGrantUser = async function () {
     const emailEl = document.getElementById('gtu-admin-new-email');
+    const nameEl = document.getElementById('gtu-admin-new-name');
     const roleEl = document.getElementById('gtu-admin-new-role');
     if (!emailEl || !emailEl.value) return;
-    window.gtudevSetUserState(emailEl.value, true, false, roleEl ? roleEl.value : 'beta_tester');
+    const selectedApps = [];
+    document.querySelectorAll('.gtu-new-app-cb:checked').forEach((cb) => selectedApps.push(cb.value));
+    const selectedPerms = {
+      canListen: false,
+      canComment: false,
+      canCreateArtistProfile: false,
+      canUpload: false,
+      canSignSplitsheet: false,
+      canEditMetadata: false,
+      canDelete: false
+    };
+    document.querySelectorAll('.gtu-new-perm-cb').forEach((cb) => {
+      selectedPerms[cb.value] = Boolean(cb.checked);
+    });
+    const cleanEmail = emailEl.value.trim().toLowerCase();
+    const artisticName = (nameEl && nameEl.value ? nameEl.value.trim() : '') || cleanEmail.split('@')[0];
+    await window.gtudevSetUserState(cleanEmail, true, false, roleEl ? roleEl.value : 'artist', {
+      name: artisticName,
+      artisticName,
+      allowedApps: selectedApps.length ? selectedApps : ['gtuprod'],
+      permissions: selectedPerms
+    });
+    window.gtudevCopyInviteLink(cleanEmail);
     emailEl.value = '';
+    if (nameEl) nameEl.value = '';
   };
 
   window.gtudevBanUserInput = function () {
@@ -1492,7 +2055,12 @@
   };
 
   window.gtudevApproveWaitlist = async function (email) {
-    await window.gtudevSetUserState(email, true, false, 'beta_tester');
+    const wl = (STATE.waitlist || []).find((w) => String(w.email || '').toLowerCase() === String(email || '').toLowerCase());
+    await window.gtudevSetUserState(email, true, false, 'artist', {
+      name: (wl && wl.name) || String(email).split('@')[0],
+      artisticName: (wl && wl.name) || String(email).split('@')[0],
+      allowedApps: ['gtuprod']
+    });
     const db = getFirestore();
     if (db) {
       const docId = email.replace(/[^a-z0-9@._-]/gi, '_');
@@ -1518,6 +2086,7 @@
     });
     STATE.trash[clean] = trashRecord;
     delete STATE.users[clean];
+    saveCachedAclUsers(STATE.users);
     STATE.waitlist = (STATE.waitlist || []).filter((w) => String(w.email || '').toLowerCase() !== clean);
     renderAdminUsersList();
     renderAdminWaitlist();
@@ -1538,7 +2107,7 @@
     if (!clean) return null;
     const item = STATE.trash[clean];
     if (!item) return null;
-    const restoredRole = item.previousRole && item.previousRole !== 'banned' ? item.previousRole : 'beta_tester';
+    const restoredRole = item.previousRole && item.previousRole !== 'banned' ? item.previousRole : 'artist';
     const restoredAuthorized = item.previousAuthorized !== undefined ? Boolean(item.previousAuthorized) : true;
     await window.gtudevSetUserState(clean, restoredAuthorized, false, restoredRole);
     delete STATE.trash[clean];
@@ -1653,14 +2222,21 @@
         if (authInst && typeof authInst.onAuthStateChanged === 'function') {
           authInst.onAuthStateChanged((user) => {
             if (!user) {
-              if (typeof localStorage === 'undefined' || localStorage.getItem('gtudev_handoff_session') !== '1') {
+              const hasInvitedSession = Boolean(getPersistedInvitedUserSession());
+              if (!hasInvitedSession && (typeof localStorage === 'undefined' || localStorage.getItem('gtudev_handoff_session') !== '1')) {
                 clearVerifiedAdminEmail();
               }
-            } else if (!checkIsAdminEmail(user.email)) {
-              clearVerifiedAdminEmail();
-              authInst.signOut().catch(() => {});
-            } else {
+            } else if (checkIsAdminEmail(user.email)) {
               persistVerifiedAdminEmail(user.email);
+            } else {
+              const cleanEmail = String(user.email || '').trim().toLowerCase();
+              const invited = STATE.users[cleanEmail] ? normalizeUserRecord(STATE.users[cleanEmail], cleanEmail) : getPersistedInvitedUserSession();
+              if (invited && invited.email === cleanEmail && canUserAccessApp(invited, APP_CTX.id)) {
+                persistInvitedUserSession(invited);
+              } else {
+                clearVerifiedAdminEmail();
+                authInst.signOut().catch(() => {});
+              }
             }
             updateAdminVisibility();
             rewriteEcosystemLinks();
