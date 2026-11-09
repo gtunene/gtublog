@@ -19,7 +19,7 @@
 
   const ADMIN_EMAILS = ['gerarditomusic@gmail.com', 'info@dev.gtunene.com'];
   const GEMINI_KEY = ['AIzaSyDY2A8qkpiSfU', '0VCy7_y99j5YnZH5c88OY'].join('');
-  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_KEY}`;
 
   const CLOUD_RUN_BACKENDS = {
     promo: 'https://gtudev-promo-agent-291498173768.europe-west1.run.app',
@@ -210,6 +210,7 @@
     if (checkIsAdminEmail(userRecord.email)) return true;
     if (userRecord.isBanned || !userRecord.authorized) return false;
     const targetApp = appId || APP_CTX.id;
+    if (targetApp === 'hub') return true;
     const apps = Array.isArray(userRecord.allowedApps) ? userRecord.allowedApps : ['gtuprod'];
     return apps.includes(targetApp);
   }
@@ -602,8 +603,8 @@
         }
       }
       if (STATE.isAdminLoggedIn && email && typeof window.unlockSmmDashboard === 'function') {
-        const gateEl = document.getElementById('smm-auth-gate');
-        if (gateEl && gateEl.style.display !== 'none') {
+        const gateEl = document.getElementById('smm-auth-gate') || document.getElementById('auth-screen');
+        if (!gateEl || gateEl.style.display !== 'none') {
           window.unlockSmmDashboard(email, '');
         }
       }
@@ -2201,18 +2202,20 @@
   }
 
   function boot() {
-    window.addEventListener('message', (ev) => {
-      try {
-        const data = ev && ev.data ? ev.data : {};
-        if (data.type === 'GTUDEV_SSO_STATE' && data.email && checkIsAdminEmail(data.email)) {
-          if (!STATE.isAdminLoggedIn) {
-            persistVerifiedAdminEmail(data.email, data.token);
-            updateAdminVisibility();
-            rewriteEcosystemLinks();
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('message', (ev) => {
+        try {
+          const data = ev && ev.data ? ev.data : {};
+          if (data.type === 'GTUDEV_SSO_STATE' && data.email && checkIsAdminEmail(data.email)) {
+            if (!STATE.isAdminLoggedIn) {
+              persistVerifiedAdminEmail(data.email, data.token);
+              updateAdminVisibility();
+              rewriteEcosystemLinks();
+            }
           }
-        }
-      } catch (e) {}
-    });
+        } catch (e) {}
+      });
+    }
     injectDOM();
     updateAdminVisibility();
     rewriteEcosystemLinks();
