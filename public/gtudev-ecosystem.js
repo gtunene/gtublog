@@ -2159,7 +2159,7 @@
   const SUITE_URL_REMAP = {
     'https://gtudev.web.app': 'https://gtudev-suite.web.app',
     'https://gtublog.web.app': 'https://gtublog-suite.web.app',
-    'https://gtuprod.web.app': 'https://gtuprod-suite.web.app',
+    'https://gtuprod-suite.web.app': 'https://gtuprod-suite.web.app',
     'https://promoagent.web.app': 'https://gtupromo-suite.web.app',
     'https://smmgtuagent.web.app': 'https://gtusocial-suite.web.app',
     'https://musicscore.web.app': 'https://gtuscore-suite.web.app',
